@@ -10,7 +10,7 @@ const RegisterPage = Loadable(lazy(() => import('pages/auth/Register')));
 
 // ==============================|| AUTH ROUTING ||============================== //
 
-const LoginRoutes = {
+const AuthRoutes = {
   path: '/',
   children: [
     {
@@ -30,4 +30,4 @@ const LoginRoutes = {
   ]
 };
 
-export default LoginRoutes;
+export default AuthRoutes;

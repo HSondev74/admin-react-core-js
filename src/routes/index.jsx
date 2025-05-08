@@ -1,11 +1,38 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { Suspense } from 'react';
 
 // project imports
 import MainRoutes from './MainRoutes';
-import LoginRoutes from './LoginRoutes';
+import LoginRoutes from './AuthRoutes';
+import { AuthProvider } from 'contexts/AuthContext';
+import PrivateRoute from './PrivateRoute';
+import PublicRoute from './PublicRoute';
+import Loader from '../components/Loader';
 
 // ==============================|| ROUTING RENDER ||============================== //
 
-const router = createBrowserRouter([MainRoutes, LoginRoutes], { basename: import.meta.env.VITE_APP_BASE_NAME });
+// Create routes configuration with private and public routes
+const routes = [
+  {
+    path: '/',
+    element: <PrivateRoute />,
+    children: [MainRoutes]
+  },
+  {
+    path: '/',
+    element: <PublicRoute />,
+    children: [LoginRoutes]
+  }
+];
 
-export default router;
+const router = createBrowserRouter(routes, { basename: import.meta.env.VITE_APP_BASE_NAME });
+
+const AppRoutes = () => (
+  <AuthProvider>
+    <Suspense fallback={<Loader />}>
+      <RouterProvider router={router} />
+    </Suspense>
+  </AuthProvider>
+);
+
+export default AppRoutes;
