@@ -51,6 +51,54 @@ class UsersApi extends BaseApi {
   }
 
   /**
+   * Lấy danh sách người dùng có phân trang
+   * @param {number} page - Trang hiện tại (bắt đầu từ 0)
+   * @param {number} size - Số lượng bản ghi mỗi trang
+   * @param {string} role - Vai trò (tùy chọn)
+   * @param {string} status - Trạng thái (tùy chọn)
+   * @param {string} dateFrom - Ngày bắt đầu (tùy chọn)
+   * @param {string} dateTo - Ngày kết thúc (tùy chọn)
+   * @returns {Promise<Object>} - Dữ liệu người dùng
+   */
+  async getListUser(params) {
+    console.log(params);
+    try {
+      const { page, size, role, status, dateFrom, dateTo, searchTerm } = params;
+
+      const paramMap = {
+        page: 'page',
+        size: 'size',
+        role: 'role',
+        status: 'status',
+        dateFrom: 'startTime',
+        dateTo: 'endTime'
+      };
+
+      const mappedParams = Object.fromEntries(
+        Object.entries({ page, size, role, status, dateFrom, dateTo })
+          .filter(([key, value]) => value !== '' && value != null && value !== undefined && paramMap[key])
+          .map(([key, value]) => [paramMap[key], value])
+      );
+
+      // Xử lý searchTerm
+      if (searchTerm && typeof searchTerm === 'string') {
+        const isPhone = /^\d{8,15}$/.test(searchTerm.trim()); // ví dụ: chuỗi số từ 8–15 chữ số
+        if (isPhone) {
+          mappedParams['phone'] = searchTerm.trim();
+        } else {
+          mappedParams['username'] = searchTerm.trim();
+        }
+      }
+
+      const queryString = new URLSearchParams(mappedParams).toString();
+
+      return await this.get(`/all?${queryString}`);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
    * Tìm người dùng theo ID
    * @param {number} id - ID người dùng
    * @returns {Promise<Object>} - Dữ liệu người dùng

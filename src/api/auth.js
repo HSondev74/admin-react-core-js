@@ -1,4 +1,5 @@
 import BaseApi from './BaseApi';
+import { getCookie, removeCookie } from '../utils/cookies';
 
 /**
  * Class quản lý các API liên quan đến xác thực người dùng
@@ -8,7 +9,7 @@ class AuthApi extends BaseApi {
    * Constructor
    */
   constructor() {
-    super('/auth');
+    super('');
   }
 
   /**
@@ -20,13 +21,11 @@ class AuthApi extends BaseApi {
    */
   async login(credentials) {
     try {
-      const response = await this.post('/login', credentials);
-
+      const response = await this.post('/auth/login', credentials);
       // Lưu token vào localStorage
-      if (response?.token) {
-        localStorage.setItem('token', response.token);
-      }
-
+      // if (response.data?.accessToken) {
+      //   localStorage.setItem('accessToken', response.data?.accessToken);
+      // }
       return response;
     } catch (error) {
       throw error;
@@ -39,17 +38,12 @@ class AuthApi extends BaseApi {
    */
   async logout() {
     try {
-      const token = this.getToken();
+      const response = await this.post('/auth/logout');
 
-      if (!token) {
-        throw new Error('Không tìm thấy token xác thực');
-      }
-
-      const response = await this.post('/logout');
-
-      // Xóa dữ liệu xác thực
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      // Xóa dữ liệu xác thực từ cookie
+      removeCookie('refreshToken');
+      removeCookie('accessToken');
+      removeCookie('user');
 
       return response;
     } catch (error) {
@@ -65,10 +59,16 @@ class AuthApi extends BaseApi {
   async register(userData) {
     try {
       // API đăng ký nằm trong /users/register
-      return await this.post('/users/register', userData, { baseURL: import.meta.env.VITE_API_BASE_URL });
+      return await this.post('/auth/users/register', userData, { baseURL: import.meta.env.VITE_API_BASE_URL });
     } catch (error) {
       throw error;
     }
+  }
+
+  async refreshToken() {
+    const refreshToken = getCookie('refreshToken');
+    const response = await this.post('/token/refresh', { refreshToken });
+    return response;
   }
 
   /**
@@ -80,11 +80,11 @@ class AuthApi extends BaseApi {
   }
 
   /**
-   * Lấy token xác thực hiện tại
+   * Lấy token xác thực hiện tại từ cookie
    * @returns {string|null} - Token hiện tại hoặc null nếu chưa đăng nhập
    */
   getToken() {
-    return localStorage.getItem('token');
+    return getCookie('accessToken');
   }
 }
 

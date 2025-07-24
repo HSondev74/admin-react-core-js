@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
-
 // Material UI components
 import Box from '@mui/material/Box';
 import Table from '@mui/material/Table';
@@ -14,20 +13,14 @@ import TableSortLabel from '@mui/material/TableSortLabel';
 import Checkbox from '@mui/material/Checkbox';
 import Paper from '@mui/material/Paper';
 import IconButton from '@mui/material/IconButton';
-import Button from '@mui/material/Button';
-import Tooltip from '@mui/material/Tooltip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Collapse from '@mui/material/Collapse';
 import Typography from '@mui/material/Typography';
-import {
-  ArrowDownOutlined,
-  ArrowLeftOutlined,
-  ArrowRightOutlined,
-  ArrowUpOutlined,
-  DeleteOutlined,
-  EditOutlined,
-  EyeOutlined
-} from '@ant-design/icons';
+import { Menu, MenuItem } from '@mui/material';
+//antd icon
+import { ArrowDownOutlined, ArrowRightOutlined, DeleteOutlined, EditOutlined, EyeOutlined, MoreOutlined } from '@ant-design/icons';
+// style
+import { tableStyles } from '../../utils/style/tableStyles';
 
 /**
  * Bảng dữ liệu tùy chỉnh với khả năng sắp xếp, phân trang, chọn nhiều, và các hành động
@@ -47,15 +40,22 @@ const CustomDataTable = ({
   onSelectionChange,
   onEdit,
   onView,
-  onDelete
+  onDelete,
+  enablePagination = true,
+  selected,
+  setSelected
 }) => {
   // State
-  const [selected, setSelected] = useState([]);
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('');
   const [expandedRows, setExpandedRows] = useState({});
   const [page, setPage] = useState(pagination.page);
   const [rowsPerPage, setRowsPerPage] = useState(pagination.rowsPerPage);
+
+  //anchor
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const open = Boolean(anchorEl);
 
   // Effect to sync pagination state with props
   useEffect(() => {
@@ -70,7 +70,19 @@ const CustomDataTable = ({
     }
   }, [selected, onSelectionChange]);
 
-  // Handlers
+  // ui handlers
+
+  const handleClickMenu = useCallback((event, item) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedItem(item);
+  }, []);
+
+  const handleCloseMenu = useCallback(() => {
+    setAnchorEl(null);
+    setSelectedItem(null);
+  }, []);
+
+  // api Handlers
   const handleRequestSort = useCallback(
     (property) => {
       const isAsc = orderBy === property && order === 'asc';
@@ -115,11 +127,12 @@ const CustomDataTable = ({
   const handleChangePage = useCallback(
     (event, newPage) => {
       setPage(newPage);
-      if (onChangePage) {
+      if (enablePagination && onChangePage) {
+        // Kiểm tra enablePagination
         onChangePage(newPage);
       }
     },
-    [onChangePage]
+    [onChangePage, enablePagination]
   );
 
   const handleChangeRowsPerPage = useCallback(
@@ -127,13 +140,15 @@ const CustomDataTable = ({
       const newRowsPerPage = parseInt(event.target.value, 10);
       setRowsPerPage(newRowsPerPage);
       setPage(0);
-      if (onChangeRowsPerPage) {
+      if (enablePagination && onChangeRowsPerPage) {
+        // Kiểm tra enablePagination
         onChangeRowsPerPage(newRowsPerPage);
       }
     },
-    [onChangeRowsPerPage]
+    [onChangeRowsPerPage, enablePagination]
   );
 
+  // Chỉ chuyển sự kiện edit lên component cha
   const handleEdit = useCallback(
     (item) => {
       if (onEdit) {
@@ -156,6 +171,7 @@ const CustomDataTable = ({
     (item) => {
       if (onDelete) {
         onDelete(item);
+        setSelected([]);
       }
     },
     [onDelete]
@@ -172,116 +188,76 @@ const CustomDataTable = ({
 
   // Render action buttons for each row
   const renderActionButtons = useCallback(
-    (item) => {
-      const actions = [];
-
-      if (permissions.view) {
-        if (actionType === 'icon') {
-          actions.push(
-            <Tooltip key="view" title="Xem">
-              <IconButton color="info" size="small" onClick={() => handleView(item)}>
-                <EyeOutlined fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          );
-        } else if (actionType === 'text') {
-          actions.push(
-            <Button key="view" color="info" size="small" onClick={() => handleView(item)}>
-              Xem
-            </Button>
-          );
-        } else {
-          actions.push(
-            <Button key="view" color="info" size="small" startIcon={<EyeOutlined />} onClick={() => handleView(item)}>
-              Xem
-            </Button>
-          );
-        }
-      }
-
-      if (permissions.edit) {
-        if (actionType === 'icon') {
-          actions.push(
-            <Tooltip key="edit" title="Sửa">
-              <IconButton color="primary" size="small" onClick={() => handleEdit(item)}>
-                <EditOutlined fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          );
-        } else if (actionType === 'text') {
-          actions.push(
-            <Button key="edit" color="primary" size="small" onClick={() => handleEdit(item)}>
-              Sửa
-            </Button>
-          );
-        } else {
-          actions.push(
-            <Button key="edit" color="primary" size="small" startIcon={<EditOutlined />} onClick={() => handleEdit(item)}>
-              Sửa
-            </Button>
-          );
-        }
-      }
-
-      if (permissions.delete) {
-        if (actionType === 'icon') {
-          actions.push(
-            <Tooltip key="delete" title="Xóa">
-              <IconButton color="error" size="small" onClick={() => handleDelete(item)}>
-                <DeleteOutlined fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          );
-        } else if (actionType === 'text') {
-          actions.push(
-            <Button key="delete" color="error" size="small" onClick={() => handleDelete(item)}>
-              Xóa
-            </Button>
-          );
-        } else {
-          actions.push(
-            <Button key="delete" color="error" size="small" startIcon={<DeleteOutlined />} onClick={() => handleDelete(item)}>
-              Xóa
-            </Button>
-          );
-        }
-      }
-
-      return <Box sx={{ display: 'flex', gap: 1 }}>{actions}</Box>;
-    },
-    [actionType, permissions, handleView, handleEdit, handleDelete]
+    (item) => (
+      <Box sx={tableStyles.actionButtonStyle}>
+        <IconButton
+          aria-label="more actions"
+          aria-controls={open ? 'actions-menu' : undefined}
+          aria-expanded={open ? 'true' : undefined}
+          aria-haspopup="true"
+          onClick={(event) => handleClickMenu(event, item)}
+          size="small"
+          sx={tableStyles.actionIconButton}
+        >
+          <MoreOutlined />
+        </IconButton>
+        <Menu
+          id="actions-menu"
+          anchorEl={anchorEl}
+          open={open}
+          onClose={handleCloseMenu}
+          MenuListProps={{
+            'aria-labelledby': 'basic-button'
+          }}
+        >
+          {permissions.view && (
+            <MenuItem
+              onClick={() => {
+                handleView(selectedItem);
+                handleCloseMenu();
+              }}
+              sx={{ color: 'green' }}
+            >
+              <EyeOutlined style={tableStyles.menuItemIcon} /> Xem
+            </MenuItem>
+          )}
+          {permissions.edit && (
+            <MenuItem
+              onClick={() => {
+                handleEdit(selectedItem);
+                handleCloseMenu();
+              }}
+              sx={{ color: 'blue' }}
+            >
+              <EditOutlined style={tableStyles.menuItemIcon} /> Sửa
+            </MenuItem>
+          )}
+          {permissions.delete && (
+            <MenuItem
+              onClick={() => {
+                handleDelete(selectedItem);
+                handleCloseMenu();
+              }}
+              sx={{ color: 'red' }}
+            >
+              <DeleteOutlined style={tableStyles.menuItemIcon} /> Xóa
+            </MenuItem>
+          )}
+        </Menu>
+      </Box>
+    ),
+    [open, anchorEl, selectedItem, permissions, handleView, handleEdit, handleDelete, handleClickMenu, handleCloseMenu]
   );
 
   return (
-    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-      <TableContainer sx={{ maxHeight: 'calc(100vh - 300px)' }}>
-        <Table stickyHeader aria-label="customized table" size="small">
-          <TableHead>
+    <Paper sx={tableStyles.paper}>
+      <TableContainer sx={tableStyles.tableContainer}>
+        <Table aria-label="customized table" size="small">
+          <TableHead sx={tableStyles.tableHeadSticky}>
             <TableRow>
-              {/* Expand column for collapsible rows */}
-              {collapsible && (
-                <TableCell
-                  padding="checkbox"
-                  style={{
-                    backgroundColor: '#f5f5f5',
-                    position: 'sticky',
-                    left: 0,
-                    zIndex: 3
-                  }}
-                />
-              )}
-
-              {/* Checkbox column */}
+              {collapsible && <TableCell sx={tableStyles.tableHeadCellExpand} />}
               {showCheckbox && (
-                <TableCell
-                  padding="checkbox"
-                  style={{
-                    backgroundColor: '#f5f5f5',
-                    position: 'sticky',
-                    left: collapsible ? 40 : 0,
-                    zIndex: 3
-                  }}
-                >
+                <TableCell padding="checkbox" style={tableStyles.tableHeadCellCheckbox}>
                   <Checkbox
                     color="primary"
                     indeterminate={selected.length > 0 && selected.length < data.length}
@@ -293,20 +269,14 @@ const CustomDataTable = ({
                   />
                 </TableCell>
               )}
-
-              {/* Data columns */}
               {columns.map((column) => (
                 <TableCell
                   key={column.id}
                   align="center"
-                  style={{
-                    minWidth: column.minWidth,
-                    width: column.width,
-                    backgroundColor: '#f5f5f5',
-                    fontWeight: 'bold',
-                    position: 'sticky',
-                    left: 0,
-                    zIndex: 3
+                  sx={{
+                    ...tableStyles.tableHeadCellData,
+                    minWidth: tableStyles.tableHeadCellData.minWidth(column),
+                    width: tableStyles.tableHeadCellData.width(column)
                   }}
                   sortDirection={orderBy === column.id ? order : false}
                 >
@@ -323,22 +293,8 @@ const CustomDataTable = ({
                   )}
                 </TableCell>
               ))}
-
-              {/* Actions column */}
               {(permissions.edit || permissions.view || permissions.delete) && (
-                <TableCell
-                  align="center"
-                  style={{
-                    minWidth: 150,
-                    position: 'sticky',
-                    right: 0,
-                    backgroundColor: '#f5f5f5',
-                    fontWeight: 'bold',
-                    zIndex: 2
-                  }}
-                >
-                  Thao tác
-                </TableCell>
+                <TableCell sx={tableStyles.tableHeadCellActions}>Thao tác</TableCell>
               )}
             </TableRow>
           </TableHead>
@@ -382,34 +338,15 @@ const CustomDataTable = ({
                 return (
                   <>
                     <TableRow hover role="checkbox" aria-checked={isItemSelected} tabIndex={-1} key={row.id} selected={isItemSelected}>
-                      {/* Expand/collapse button */}
                       {collapsible && (
-                        <TableCell
-                          padding="checkbox"
-                          style={{
-                            position: 'sticky',
-                            left: 0,
-                            backgroundColor: 'inherit',
-                            zIndex: 1
-                          }}
-                        >
+                        <TableCell sx={tableStyles.tableBodyCellExpand}>
                           <IconButton aria-label="expand row" size="small" onClick={() => toggleRowExpand(row.id)}>
                             {isExpanded ? <ArrowDownOutlined /> : <ArrowRightOutlined />}
                           </IconButton>
                         </TableCell>
                       )}
-
-                      {/* Checkbox */}
                       {showCheckbox && (
-                        <TableCell
-                          padding="checkbox"
-                          style={{
-                            position: 'sticky',
-                            left: collapsible ? 40 : 0,
-                            backgroundColor: isItemSelected ? 'rgba(25, 118, 210, 0.08)' : 'white',
-                            zIndex: 1
-                          }}
-                        >
+                        <TableCell sx={tableStyles.tableBodyCellCheckbox(isItemSelected, collapsible)}>
                           <Checkbox
                             color="primary"
                             checked={isItemSelected}
@@ -420,8 +357,6 @@ const CustomDataTable = ({
                           />
                         </TableCell>
                       )}
-
-                      {/* Data cells */}
                       {columns.map((column) => {
                         const value = row[column.id];
                         return (
@@ -430,38 +365,23 @@ const CustomDataTable = ({
                           </TableCell>
                         );
                       })}
-
-                      {/* Actions */}
                       {(permissions.edit || permissions.view || permissions.delete) && (
-                        <TableCell
-                          align="center"
-                          style={{
-                            position: 'sticky',
-                            right: 0,
-                            backgroundColor: 'white',
-                            boxShadow: 'rgba(0, 0, 0, 0.08) 0px 4px 12px',
-                            zIndex: 1
-                          }}
-                        >
-                          {renderActionButtons(row)}
-                        </TableCell>
+                        <TableCell sx={tableStyles.tableBodyCellActions}>{renderActionButtons(row)}</TableCell>
                       )}
                     </TableRow>
-
-                    {/* Collapsible content */}
                     {collapsible && (
                       <TableRow>
                         <TableCell
+                          sx={tableStyles.collapsibleRow}
                           colSpan={
                             columns.length +
                             (showCheckbox ? 1 : 0) +
                             1 + // Expand column
                             (permissions.edit || permissions.view || permissions.delete ? 1 : 0)
                           }
-                          style={{ paddingBottom: 0, paddingTop: 0, border: 0 }}
                         >
                           <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-                            <Box sx={{ margin: 2 }}>{renderCollapse && renderCollapse(row)}</Box>
+                            <Box sx={tableStyles.collapsibleBox}>{renderCollapse && renderCollapse(row)}</Box>
                           </Collapse>
                         </TableCell>
                       </TableRow>
@@ -474,18 +394,20 @@ const CustomDataTable = ({
         </Table>
       </TableContainer>
 
-      {/* Pagination */}
-      <TablePagination
-        rowsPerPageOptions={[5, 10, 25, 50, 100]}
-        component="div"
-        count={pagination.totalItems}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-        labelRowsPerPage="Số hàng mỗi trang:"
-        labelDisplayedRows={({ from, to, count }) => `${from}-${to} của ${count}`}
-      />
+      {/* Pagination feature */}
+      {enablePagination && (
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25, 50, 100]}
+          component="div"
+          count={pagination.totalItems}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          labelRowsPerPage="Số hàng mỗi trang:"
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to} của ${count}`}
+        />
+      )}
     </Paper>
   );
 };
@@ -523,7 +445,10 @@ CustomDataTable.propTypes = {
   onSelectionChange: PropTypes.func,
   onEdit: PropTypes.func,
   onView: PropTypes.func,
-  onDelete: PropTypes.func
+  onDelete: PropTypes.func,
+  enablePagination: PropTypes.bool,
+  selected: PropTypes.array,
+  setSelected: PropTypes.func
 };
 
 export default CustomDataTable;

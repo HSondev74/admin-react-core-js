@@ -1,12 +1,10 @@
 {
-  "name": "mantis-material-free-react",
+  "name": "react-core",
   "version": "1.4.0",
   "private": false,
-  "homepage": "https://mantisdashboard.io/free",
   "author": {
-    "name": "CodedThemes",
-    "email": "codedthemes@gmail.com",
-    "url": "https://codedthemes.com/"
+    "name": "Le Hong Son",
+    "url": "https://github.com/HSondev74"
   },
   "scripts": {
     "start": "vite",
@@ -16,7 +14,8 @@
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:fix": "eslint --fix \"src/**/*.{js,jsx,ts,tsx}\"",
     "prettier": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
-    "knip": "knip"
+    "knip": "knip",
+    "prepare": "husky"
   },
   "dependencies": {
     "@ant-design/colors": "7.2.0",
@@ -70,6 +69,8 @@
     ]
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
     "@eslint/compat": "1.2.5",
     "@eslint/eslintrc": "3.2.0",
     "@eslint/js": "9.19.0",
@@ -80,6 +81,7 @@
     "eslint-plugin-prettier": "5.2.3",
     "eslint-plugin-react": "7.37.4",
     "eslint-plugin-react-hooks": "5.1.0",
+    "husky": "^9.1.7",
     "immutable": "4.3.7",
     "knip": "5.45.0",
     "prettier": "3.4.2",

@@ -33,7 +33,8 @@ const ModalWrapper = ({
   onCancel,
   onClose,
   disableBackdropClick = false,
-  disableEscapeKeyDown = false
+  disableEscapeKeyDown = false,
+  styles
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -83,14 +84,11 @@ const ModalWrapper = ({
       fullWidth={fullWidth}
       aria-labelledby="modal-dialog-title"
       PaperProps={{
-        sx: {
-          width: '100%',
-          margin: '0 auto'
-        }
+        sx: styles.paper
       }}
     >
       <DialogTitle id="modal-dialog-title">
-        <Box display="flex" alignItems="center" justifyContent="space-between">
+        <Box sx={styles.titleContainer}>
           <Typography variant="h4">{title}</Typography>
           <IconButton edge="end" color="inherit" onClick={handleCancel} aria-label="close">
             <CloseOutlined />
@@ -127,7 +125,8 @@ ModalWrapper.propTypes = {
   onCancel: PropTypes.func,
   onClose: PropTypes.func,
   disableBackdropClick: PropTypes.bool,
-  disableEscapeKeyDown: PropTypes.bool
+  disableEscapeKeyDown: PropTypes.bool,
+  styles: PropTypes.object
 };
 
 export default ModalWrapper;

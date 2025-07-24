@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "Validating commit message..."
+bun commitlint --edit "$1"
+
+if [ $? -ne 0 ]; then
+  echo "❌ Invalid commit message. Please follow the conventional commit format."
+  echo "   Example: feat: add new feature"
+  echo "   Example: fix: resolve issue with login"
+  exit 1
+fi
+
+echo "✅ Commit message is valid!"

@@ -9,12 +9,21 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
+import { Collapse } from '@mui/material';
 import Box from '@mui/material/Box';
-
+import Fade from '@mui/material/Fade';
+import Popper from '@mui/material/Popper';
+import Grow from '@mui/material/Grow';
 // project imports
 import IconButton from 'components/@extended/IconButton';
 
 import { handlerDrawerOpen, useGetMenuMaster } from 'api/menu';
+
+import { DownOutlined } from '@ant-design/icons';
+import { RightOutlined } from '@ant-design/icons';
+import dashboard from '../../../../../menu-items/dashboard';
+import { useRef, useState } from 'react';
+import NavSubMenu from './NavSubMenu';
 
 // ==============================|| NAVIGATION - LIST ITEM ||============================== //
 
@@ -50,20 +59,41 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
   );
 
   const { pathname } = useLocation();
-  const isSelected = !!matchPath({ path: item?.link ? item.link : item.url, end: false }, pathname);
-
+  const path = item?.link || item?.url || '';
+  const isSelected = path ? !!matchPath({ path, end: false }, pathname) : false;
   const textColor = 'text.primary';
   const iconSelectedColor = 'primary.main';
 
+  // Condition dynamic dashboard (side bar)
+  const [isOpen, setIsOpen] = useState(false);
+  const hasChild = Array.isArray(item.children) && item.children.length > 0;
+  const showIcon = Array.isArray(item.children) && item.children.length > 0 && !item.children.every((child) => child.type === 'button');
+  const isSubMenu = hasChild && item.children.some((child) => child.type !== 'button');
+
+  // Condition dynamic dashboard (popup)
+  const [showSubMenu, setShowSubMenu] = useState(false);
+  const handleClick = (e) => {
+    if (isSubMenu) {
+      e.preventDefault();
+      setIsOpen((prev) => !prev);
+    } else {
+      itemHandler();
+    }
+  };
+  const buttonRef = useRef();
   return (
     <>
       <Box sx={{ position: 'relative' }}>
         <ListItemButton
+          ref={buttonRef}
           component={Link}
           to={item.url}
           target={itemTarget}
           disabled={item.disabled}
           selected={isSelected}
+          onClick={handleClick}
+          onMouseEnter={() => setShowSubMenu(true)}
+          onMouseLeave={() => setShowSubMenu(false)}
           sx={(theme) => ({
             zIndex: 1201,
             pl: drawerOpen ? `${level * 28}px` : 1.5,
@@ -84,9 +114,8 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
               '&.Mui-selected': { '&:hover': { bgcolor: 'transparent' }, bgcolor: 'transparent' }
             })
           })}
-          onClick={() => itemHandler()}
         >
-          {itemIcon && (
+          {itemIcon && level === 1 && (
             <ListItemIcon
               sx={(theme) => ({
                 minWidth: 28,
@@ -110,12 +139,43 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
               {itemIcon}
             </ListItemIcon>
           )}
+          {/* Popper submenu */}
+          {hasChild && !drawerOpen && (
+            <Popper
+              open={showSubMenu}
+              anchorEl={buttonRef.current}
+              placement="right-start"
+              disablePortal={false}
+              style={{ zIndex: 2100 }}
+              onMouseEnter={() => setShowSubMenu(true)}
+              transition
+            >
+              {({ TransitionProps }) => (
+                <Grow {...TransitionProps} style={{ transformOrigin: 'top left' }} timeout={500}>
+                  <Box>
+                    <NavSubMenu items={item.children} level={level + 1} setSelectedID={setSelectedID} />
+                  </Box>
+                </Grow>
+              )}
+            </Popper>
+          )}
           {(drawerOpen || (!drawerOpen && level !== 1)) && (
             <ListItemText
               primary={
-                <Typography variant="h6" sx={{ color: isSelected ? iconSelectedColor : textColor }}>
-                  {item.title}
-                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="h6" sx={{ color: isSelected ? iconSelectedColor : textColor }}>
+                    {item.title}
+                  </Typography>
+
+                  {hasChild && !drawerOpen && (
+                    <RightOutlined
+                      style={{
+                        fontSize: '12px',
+                        transition: 'transform 0.2s'
+                      }}
+                    />
+                  )}
+                </Box>
               }
             />
           )}
@@ -128,7 +188,35 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
               avatar={item.chip.avatar && <Avatar>{item.chip.avatar}</Avatar>}
             />
           )}
+
+          {showIcon && drawerOpen && (
+            <Fade in={drawerOpen} timeout={300} unmountOnExit>
+              <Box sx={{ marginRight: '2px' }}>
+                <DownOutlined
+                  style={{
+                    fontSize: '12px',
+                    transition: 'transform 0.2s',
+                    transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)'
+                  }}
+                />
+              </Box>
+            </Fade>
+          )}
         </ListItemButton>
+
+        {/* Collapse for open drawer */}
+        {drawerOpen && hasChild && (
+          <Collapse in={isOpen} timeout="auto" unmountOnExit>
+            <Box>
+              {item.children.map((child, id) => {
+                if (child.type !== 'button') {
+                  return <NavItem key={id} item={child} level={level} isParents={false} setSelectedID={setSelectedID} />;
+                }
+              })}
+            </Box>
+          </Collapse>
+        )}
+
         {(drawerOpen || (!drawerOpen && level !== 1)) &&
           item?.actions &&
           item?.actions.map((action, index) => {

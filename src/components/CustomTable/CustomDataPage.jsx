@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
-
+import debounce from 'lodash/debounce';
 // Material UI components
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -10,10 +10,10 @@ import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import Collapse from '@mui/material/Collapse';
 import Divider from '@mui/material/Divider';
-
 // Ant Design Icons
 import { PlusOutlined, SearchOutlined, FilterOutlined } from '@ant-design/icons';
-
+// style
+import { pageStyles, modalWrapperStyles } from '../../utils/style/pageStyles';
 // Project components
 import MainCard from '../MainCard';
 import CustomDataTable from './CustomDataTable';
@@ -26,8 +26,6 @@ const CustomDataPage = ({
   filterComponent,
   searchPlaceholder = 'Tìm kiếm...',
   onSearch,
-  onCreate,
-  onEdit,
   onView,
   onDelete,
   permissions = { create: true, edit: true, view: true, delete: true },
@@ -41,7 +39,10 @@ const CustomDataPage = ({
   loading = false,
   pagination = { page: 0, rowsPerPage: 10, totalItems: 0 },
   onChangePage,
-  onChangeRowsPerPage
+  onChangeRowsPerPage,
+  enableSearch = true,
+  enableFilter = true,
+  enablePagination = true
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
@@ -53,15 +54,25 @@ const CustomDataPage = ({
   const [openViewForm, setOpenViewForm] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
 
+  const debouncedSearch = useCallback(
+    debounce((value) => {
+      onSearch?.(value);
+    }, 500),
+    [onSearch]
+  );
+
   const handleSearch = useCallback(
     (e) => {
-      const value = e.target.value;
-      setSearchTerm(value);
-      if (onSearch) {
-        onSearch(value);
+      if (enableSearch && onSearch) {
+        // Kiểm tra enableSearch && onSearch trước khi gọi
+        const value = e.target.value;
+        setSearchTerm(value);
+        debouncedSearch(value);
+      } else if (enableSearch) {
+        setSearchTerm(e.target.value);
       }
     },
-    [onSearch]
+    [debouncedSearch, enableSearch, onSearch]
   );
 
   const handleToggleAdvancedFilter = useCallback(() => {
@@ -73,22 +84,13 @@ const CustomDataPage = ({
   }, []);
 
   const handleCreate = useCallback(() => {
-    if (onCreate) {
-      onCreate();
-    }
     setOpenCreateForm(true);
-  }, [onCreate]);
+  }, []);
 
-  const handleEdit = useCallback(
-    (item) => {
-      setCurrentItem(item);
-      if (onEdit) {
-        onEdit(item);
-      }
-      setOpenEditForm(true);
-    },
-    [onEdit]
-  );
+  const handleEdit = useCallback((item) => {
+    setCurrentItem(item);
+    setOpenEditForm(true);
+  }, []);
 
   const handleView = useCallback(
     (item) => {
@@ -102,7 +104,8 @@ const CustomDataPage = ({
   );
 
   const handleDeleteConfirm = useCallback((item) => {
-    setItemToDelete(item);
+    const ids = Array.isArray(item) ? item.map((i) => i.id) : [item.id]; // Chuyển object (xóa đơn) thành mảng ID
+    setItemToDelete(ids);
     setOpenConfirmDialog(true);
   }, []);
 
@@ -131,56 +134,65 @@ const CustomDataPage = ({
 
   return (
     <>
-      <Box sx={{ width: '100%' }}>
+      <Box sx={pageStyles.root}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-          <Typography variant="h3">{title}</Typography>
+          <Typography sx={pageStyles.title}>{title}</Typography>
           {permissions.create && (
-            <Button variant="contained" color="primary" startIcon={<PlusOutlined />} onClick={handleCreate}>
+            <Button sx={pageStyles.createButton} startIcon={<PlusOutlined />} onClick={handleCreate}>
               Thêm mới
             </Button>
           )}
         </Stack>
 
         <MainCard
-          sx={{ mb: 3 }}
+          sx={pageStyles.mainCard}
           title={
             <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <TextField
-                  placeholder={searchPlaceholder}
-                  value={searchTerm}
-                  onChange={handleSearch}
-                  variant="outlined"
-                  size="small"
-                  sx={{ width: { xs: '100%', md: '400px' } }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchOutlined style={{ fontSize: '16px' }} />
-                      </InputAdornment>
-                    )
-                  }}
-                />
+              <Box sx={pageStyles.searchContainer}>
+                {/* search feature */}
+                {enableSearch && (
+                  <TextField
+                    placeholder={searchPlaceholder}
+                    value={searchTerm}
+                    onChange={handleSearch}
+                    variant="outlined"
+                    size="small"
+                    sx={{ width: { xs: '100%', md: '400px' } }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchOutlined style={{ fontSize: '16px' }} />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                )}
               </Box>
-              <div style={{ display: 'flex', gap: 30 }}>
+              {/* filter button open/close  */}
+              <div style={pageStyles.actionButtons}>
                 {selectedItems.length > 0 && permissions.delete && (
                   <Button variant="contained" color="error" onClick={handleDeleteMultiple}>
                     Xóa {selectedItems.length} mục đã chọn
                   </Button>
                 )}
-                <Button variant="contained" color="warning" onClick={handleToggleAdvancedFilter}>
-                  <FilterOutlined style={{ marginRight: 10 }} /> Lọc nâng cao
-                </Button>
+                {filterComponent && (
+                  <Button variant="contained" color="warning" onClick={handleToggleAdvancedFilter}>
+                    <FilterOutlined style={pageStyles.filterIcon} /> Lọc nâng cao
+                  </Button>
+                )}
               </div>
             </Stack>
           }
         >
-          <Collapse in={showAdvancedFilter}>
-            <Divider sx={{ mt: -1, mb: 2 }} />
-            {filterComponent}
-          </Collapse>
-        </MainCard>
+          {/* filter feature  */}
 
+          {enableFilter && filterComponent ? (
+            <Collapse in={showAdvancedFilter}>
+              <Divider sx={pageStyles.collapseDivider} />
+              {filterComponent}
+            </Collapse>
+          ) : null}
+        </MainCard>
         {/* Data table */}
         <CustomDataTable
           data={data}
@@ -198,6 +210,9 @@ const CustomDataPage = ({
           onEdit={handleEdit}
           onView={handleView}
           onDelete={handleDeleteConfirm}
+          enablePagination={enablePagination}
+          selected={selectedItems}
+          setSelected={setSelectedItems}
         />
       </Box>
 
@@ -206,15 +221,18 @@ const CustomDataPage = ({
         title="Xác nhận xóa"
         content={
           <Typography variant="body1">
-            {Array.isArray(itemToDelete)
+            {Array.isArray(itemToDelete) && itemToDelete.length > 1
               ? `Bạn có chắc chắn muốn xóa ${itemToDelete.length} mục đã chọn không?`
               : 'Bạn có chắc chắn muốn xóa mục này không?'}
           </Typography>
         }
         confirmText="Xóa"
+        cancelText="Hủy"
         confirmButtonProps={{ color: 'error', variant: 'contained' }}
+        cancelButtonProps={{ outlined: 'none', color: 'primary.dark' }}
         onConfirm={handleConfirmDelete}
         onCancel={() => setOpenConfirmDialog(false)}
+        styles={modalWrapperStyles}
       />
 
       {createComponent && openCreateForm && (
@@ -225,6 +243,7 @@ const CustomDataPage = ({
           showActions={false}
           onClose={handleCloseForm}
           maxWidth="sm"
+          styles={modalWrapperStyles}
         />
       )}
 
@@ -236,6 +255,7 @@ const CustomDataPage = ({
           showActions={false}
           onClose={handleCloseForm}
           maxWidth="md"
+          styles={modalWrapperStyles}
         />
       )}
 
@@ -247,6 +267,7 @@ const CustomDataPage = ({
           showActions={false}
           onClose={handleCloseForm}
           maxWidth="md"
+          styles={modalWrapperStyles}
         />
       )}
     </>
@@ -284,7 +305,10 @@ CustomDataPage.propTypes = {
     totalItems: PropTypes.number
   }),
   onChangePage: PropTypes.func,
-  onChangeRowsPerPage: PropTypes.func
+  onChangeRowsPerPage: PropTypes.func,
+  enableSearch: PropTypes.bool,
+  enableFilter: PropTypes.bool,
+  enablePagination: PropTypes.bool
 };
 
 export default CustomDataPage;

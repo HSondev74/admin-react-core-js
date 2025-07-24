@@ -1,0 +1,17 @@
+.nav-item_sub {
+    position: fixed;
+    opacity: 0;
+    visibility: hidden;
+    scale: 0;
+    transition:
+      opacity 0.2s,
+      visibility 0.2s,
+      scale 0.2s;
+    transform-origin: top left;
+  }
+  
+.nav-item_sub.show {
+    opacity: 1;
+    visibility: visible;
+    scale: 1;
+}

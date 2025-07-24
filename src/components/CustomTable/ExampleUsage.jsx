@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 // Material UI components
 import Grid from '@mui/material/Grid';
