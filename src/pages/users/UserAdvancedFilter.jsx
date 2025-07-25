@@ -1,5 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-
 // Container Component
 import AdvancedFilter from '../../components/ui/AdvancedFilter';
 import CustomSelectField from '../../components/ui/CustomSelectField';

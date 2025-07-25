@@ -1,8 +1,8 @@
 #!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
+set -e
 
-echo "Validating commit message..."
-bun commitlint --edit "$1"
+echo "🔍 Validating commit message..."
+npx commitlint --edit "$1"
 
 if [ $? -ne 0 ]; then
   echo "❌ Invalid commit message. Please follow the conventional commit format."

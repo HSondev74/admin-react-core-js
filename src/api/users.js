@@ -61,7 +61,6 @@ class UsersApi extends BaseApi {
    * @returns {Promise<Object>} - Dữ liệu người dùng
    */
   async getListUser(params) {
-    console.log(params);
     try {
       const { page, size, role, status, dateFrom, dateTo, searchTerm } = params;
 

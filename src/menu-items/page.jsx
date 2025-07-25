@@ -21,7 +21,7 @@ const pages = {
       title: 'Login',
       type: 'item',
       url: '/login',
-      icon: icons.LoginOutlined,
+      icon: icons.LoginOutlined
     },
     {
       id: 'register1',
@@ -57,14 +57,14 @@ const pages = {
       title: 'Quản lý Người dùng',
       type: 'item',
       url: '/user-mangement',
-      icon: icons.UserOutlined,
+      icon: icons.UserOutlined
     },
     {
       id: 'role-mangement',
       title: 'Quản lý Chức vụ',
       type: 'item',
       url: '/role-mangement',
-      icon: icons.TeamOutlined,
+      icon: icons.TeamOutlined
     }
   ]
 };

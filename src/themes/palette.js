@@ -12,7 +12,7 @@ import ThemeOption from './theme';
 export default function Palette(mode, presetColor) {
   const colors = presetPalettes;
 
-  let greyPrimary = [
+  const greyPrimary = [
     '#ffffff',
     '#fafafa',
     '#f5f5f5',
@@ -25,8 +25,8 @@ export default function Palette(mode, presetColor) {
     '#141414',
     '#000000'
   ];
-  let greyAscent = ['#fafafa', '#bfbfbf', '#434343', '#1f1f1f'];
-  let greyConstant = ['#fafafb', '#e6ebf1'];
+  const greyAscent = ['#fafafa', '#bfbfbf', '#434343', '#1f1f1f'];
+  const greyConstant = ['#fafafb', '#e6ebf1'];
 
   colors.grey = [...greyPrimary, ...greyAscent, ...greyConstant];
 

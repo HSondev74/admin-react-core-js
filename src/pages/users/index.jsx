@@ -91,7 +91,7 @@ const UserManagementPage = () => {
       )
     }
   ];
- 
+
   //check response code
   const isSuccessCode = (code) => code >= 200 && code < 300;
 
