@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 
 // project imports
-import getColors from 'utils/getColors';
+import getColors from '../../app/utils/getColors';
 
 // assets
 import BorderOutlined from '@ant-design/icons/BorderOutlined';

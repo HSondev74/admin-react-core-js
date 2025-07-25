@@ -1,14 +1,14 @@
 import { createRoot } from 'react-dom/client';
 
 // style.scss
-import 'assets/style.css';
+import './presentation/assets/style.css';
 
 // scroll bar
 import 'simplebar-react/dist/simplebar.min.css';
 
 // apex-chart
-import 'assets/third-party/apex-chart.css';
-import 'assets/third-party/react-table.css';
+import './presentation/assets/third-party/apex-chart.css';
+import './presentation/assets/third-party/react-table.css';
 
 // google-fonts
 import '@fontsource/roboto/400.css';

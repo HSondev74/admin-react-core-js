@@ -1,5 +1,5 @@
 // project imports
-import getColors from 'utils/getColors';
+import getColors from '../../app/utils/getColors';
 
 // ==============================|| BADGE - COLORS ||============================== //
 

@@ -1,8 +1,8 @@
 import { Navigate, Outlet } from 'react-router-dom';
 
 // project imports
-import { useAuth } from 'contexts/AuthContext';
-import Loader from '../components/Loader';
+import Loader from '../presentation/components/Loader';
+import { useAuth } from '../infrastructure/hooks/useAuth';
 
 const PrivateRoute = () => {
   const { isAuthenticated, loading } = useAuth();

@@ -7,7 +7,7 @@ import LoginRoutes from './AuthRoutes';
 import { AuthProvider } from 'contexts/AuthContext';
 import PrivateRoute from './PrivateRoute';
 import PublicRoute from './PublicRoute';
-import Loader from '../components/Loader';
+import Loader from '../presentation/components/Loader';
 
 // ==============================|| ROUTING RENDER ||============================== //
 

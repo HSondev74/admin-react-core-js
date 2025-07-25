@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { authApi } from '../api';
-import { usersApi } from '../api';
+import authApi from '../infrastructure/api/http/auth';
+import usersApi from '../infrastructure/api/http/users';
 
 const AuthContext = createContext(null);
 

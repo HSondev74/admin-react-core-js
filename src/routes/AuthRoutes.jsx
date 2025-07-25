@@ -1,12 +1,12 @@
 import { lazy } from 'react';
 
 // project imports
-import AuthLayout from 'layout/Auth';
-import Loadable from 'components/Loadable';
+import AuthLayout from '../presentation/components/layout/Auth';
+import Loadable from '../presentation/components/Loadable';
 
 // jwt auth
-const LoginPage = Loadable(lazy(() => import('pages/auth/Login')));
-const RegisterPage = Loadable(lazy(() => import('pages/auth/Register')));
+const LoginPage = Loadable(lazy(() => import('../presentation/screen/auth/Login')));
+const RegisterPage = Loadable(lazy(() => import('../presentation/screen/auth/Register')));
 
 // ==============================|| AUTH ROUTING ||============================== //
 

@@ -1,19 +1,19 @@
 import { lazy } from 'react';
 
 // project imports
-import Loadable from 'components/Loadable';
-import DashboardLayout from 'layout/Dashboard';
+import Loadable from '../presentation/components/Loadable';
+import DashboardLayout from '../presentation/components/layout/Dashboard';
 
 // render- Dashboard
-const DashboardDefault = Loadable(lazy(() => import('pages/dashboard/default')));
+const DashboardDefault = Loadable(lazy(() => import('../presentation/screen/dashboard/default')));
 
 // render - color
-const Color = Loadable(lazy(() => import('pages/component-overview/color')));
-const Typography = Loadable(lazy(() => import('pages/component-overview/typography')));
-const Shadow = Loadable(lazy(() => import('pages/component-overview/shadows')));
+const Color = Loadable(lazy(() => import('../presentation/screen/component-overview/color')));
+const Typography = Loadable(lazy(() => import('../presentation/screen/component-overview/typography')));
+const Shadow = Loadable(lazy(() => import('../presentation/screen/component-overview/shadows')));
 
 // render - sample page
-const SamplePage = Loadable(lazy(() => import('pages/extra-pages/sample-page')));
+const SamplePage = Loadable(lazy(() => import('../presentation/screen/extra-pages/sample-page')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 

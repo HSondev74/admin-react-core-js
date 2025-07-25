@@ -1,9 +1,8 @@
 import { Navigate, Outlet } from 'react-router-dom';
-import PropTypes from 'prop-types';
 
 // project imports
-import { useAuth } from 'contexts/AuthContext';
-import Loader from '../components/Loader';
+import Loader from '../presentation/components/Loader';
+import { useAuth } from '../infrastructure/hooks/useAuth';
 
 const PublicRoute = () => {
   const { isAuthenticated, loading } = useAuth();
