@@ -15,6 +15,10 @@ const Shadow = Loadable(lazy(() => import('../presentation/screen/component-over
 // render - sample page
 const SamplePage = Loadable(lazy(() => import('../presentation/screen/extra-pages/sample-page')));
 
+// lazy loading page
+const UserManagementPage = Loadable(lazy(() => import('../presentation/screen/users')));
+const RoleManagementPage = Loadable(lazy(() => import('../presentation/screen/roles')));
+
 // ==============================|| MAIN ROUTING ||============================== //
 
 const MainRoutes = {
@@ -49,6 +53,14 @@ const MainRoutes = {
     {
       path: 'sample-page',
       element: <SamplePage />
+    },
+    {
+      path: 'user-mangement',
+      element: <UserManagementPage />
+    },
+    {
+      path: 'role-mangement',
+      element: <RoleManagementPage />
     }
   ]
 };

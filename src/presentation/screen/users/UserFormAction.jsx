@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react';
-import usersApi from '../../api/users';
+import usersApi from '../../../infrastructure/api/http/users';
 
 // Material UI components
 import Grid from '@mui/material/Grid';
@@ -23,9 +23,9 @@ import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import * as Yup from 'yup';
 import { Formik, Form } from 'formik';
 // style
-import { formStyles, formViewStyles } from '../../utils/style/formStyles';
-import rolesApi from '../../api/roles';
-import { validateForm } from '../../utils/formValidation';
+import { formStyles, formViewStyles } from '../../assets/styles/formStyles';
+import rolesApi from '../../../infrastructure/api/http/role';
+import { validateForm } from '../../../app/utils/formValidation';
 
 const UserFormAction = ({ item, onClose, onSubmit, title, isView }) => {
   const [showPassword, setShowPassword] = useState(false);

@@ -1,89 +1,88 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import {
-  getToken,
-  setToken,
-  getRefreshToken,
-  setRefreshToken,
-  getUser,
-  setUser,
-  clearAuthData,
-} from '../../utils/authToken';
+// import { getToken, setToken, getRefreshToken, setRefreshToken, getUser, setUser, clearAuthData } from '../../utils/authToken';
 import authApi from '../../api/http/auth';
 import usersApi from '../../api/http/users';
+import { setRefreshToken, setToken } from '../../utils/authToken';
+import { getCookie, removeCookie, setCookie } from '../../../app/utils/cookies';
 
 // Async thunks
-export const login = createAsyncThunk(
-  'auth/login',
-  async (credentials, { rejectWithValue }) => {
-    try {
-      const response = await authApi.login(credentials);
-      const { accessToken, refreshToken, ...userData } = response;
-      
-      // Store tokens and user data
-      setToken(accessToken);
-      if (refreshToken) {
-        setRefreshToken(refreshToken);
-      }
-      setUser(userData);
-      
-      return { user: userData, token: accessToken };
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Login failed');
-    }
+export const login = createAsyncThunk('auth/login', async (credentials, { rejectWithValue }) => {
+  try {
+    const response = await authApi.login(credentials);
+    const { token, refreshToken, ...userData } = response.data.data;
+
+    return { user: userData, token: token, refreshToken: refreshToken };
+  } catch (error) {
+    return rejectWithValue(error.response?.data?.message || 'Login failed');
   }
-);
+});
 
 export const logout = createAsyncThunk('auth/logout', async (_, { rejectWithValue }) => {
   try {
-    await authApi.logout();
-    clearAuthData();
-    return true;
+    const res = await authApi.logout();
+    return res.data;
   } catch (error) {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
     return rejectWithValue(error.response?.data?.message || 'Logout failed');
   }
 });
 
-export const register = createAsyncThunk(
-  'auth/register',
-  async (userData, { rejectWithValue }) => {
-    try {
-      const response = await authApi.register(userData);
-      return response;
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Registration failed');
-    }
+export const register = createAsyncThunk('auth/register', async (userData, { rejectWithValue }) => {
+  try {
+    const response = await authApi.register(userData);
+    return response;
+  } catch (error) {
+    return rejectWithValue(error.response?.data?.message || 'Registration failed');
   }
-);
+});
 
-export const fetchUserInfo = createAsyncThunk(
-  'auth/fetchUserInfo',
-  async (_, { rejectWithValue }) => {
-    try {
-      const userData = await usersApi.getUserInfo();
-      localStorage.setItem('user', JSON.stringify(userData));
-      return userData;
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch user info');
-    }
+export const fetchUserInfo = createAsyncThunk('auth/fetchUserInfo', async (_, { rejectWithValue }) => {
+  try {
+    const userData = await usersApi.getUserInfo();
+    return userData;
+  } catch (error) {
+    return rejectWithValue(error.response?.data?.message || 'Failed to fetch user info');
   }
-);
+});
+
+export const refreshToken = createAsyncThunk('auth/refresh-token', async (_, { getState, rejectWithValue }) => {
+  try {
+    const { auth } = getState();
+    const response = await authApi.refreshToken(auth.refreshToken);
+    const { token, refreshToken } = response.data.data;
+
+    return { token, refreshToken };
+  } catch (error) {
+    return rejectWithValue(error.response?.data?.message || 'Failed to refresh token');
+  }
+});
+
+const initialState = {
+  user: null,
+  token: getCookie('accessToken'),
+  refreshToken: getCookie('refreshToken'),
+  isAuthenticated: !!getCookie('accessToken'),
+  loading: false,
+  error: null
+};
 
 const authSlice = createSlice({
   name: 'auth',
-  initialState: {
-    user: getUser(),
-    token: getToken(),
-    refreshToken: getRefreshToken(),
-    isAuthenticated: !!getToken(),
-    loading: false,
-    error: null,
-  },
+  initialState: initialState,
   reducers: {
     clearError: (state) => {
       state.error = null;
     },
+    resetAuthState: (state) => {
+      state.user = null;
+      state.token = null;
+      state.refreshToken = null;
+      state.isAuthenticated = false;
+      state.loading = false;
+      state.error = null;
+
+      removeCookie('accessToken');
+      removeCookie('refreshToken');
+    }
   },
   extraReducers: (builder) => {
     // Login
@@ -96,17 +95,26 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.user = action.payload.user;
       state.token = action.payload.token;
-    });
-    builder.addCase(login.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.payload;
+      state.refreshToken = action.payload.refreshToken;
+
+      setCookie('accessToken', action.payload.token, { expires: 1 });
+      setCookie('refreshToken', action.payload.refreshToken, { expires: 7 });
     });
 
     // Logout
     builder.addCase(logout.fulfilled, (state) => {
+      // Khi đăng xuất thành công, đặt lại trạng thái. Redux Persist sau đó sẽ xóa localStorage.
       state.isAuthenticated = false;
       state.user = null;
       state.token = null;
+      state.refreshToken = null;
+
+      removeCookie('accessToken');
+      removeCookie('refreshToken');
+    });
+    builder.addCase(logout.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload;
     });
 
     // Register
@@ -127,8 +135,17 @@ const authSlice = createSlice({
       state.user = action.payload;
       state.isAuthenticated = true;
     });
-  },
+
+    // refreshToken
+    builder.addCase(refreshToken.fulfilled, (state, action) => {
+      state.token = action.payload.token;
+      state.refreshToken = action.payload.refreshToken;
+
+      setCookie('accessToken', action.payload.token, { expires: 1 });
+      setCookie('refreshToken', action.payload.refreshToken, { expires: 7 });
+    });
+  }
 });
 
-export const { clearError } = authSlice.actions;
-export default authSlice.reducer;
+export const { clearError, resetAuthState } = authSlice.actions;
+export const authReducer = authSlice.reducer;

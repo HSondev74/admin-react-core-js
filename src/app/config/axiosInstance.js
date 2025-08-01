@@ -1,6 +1,17 @@
 import axios from 'axios';
 import { getToken, getRefreshToken, setToken, clearAuthData } from '../../infrastructure/utils/authToken';
 import { enqueueSnackbar } from 'notistack';
+import { getCookie, setCookie } from '../utils/cookies';
+
+let reduxStore = null;
+let reduxDispatch = null;
+export const setReduxStore = (storeInstance) => {
+  if (!storeInstance) {
+    throw new Error('Redux store instance is required');
+  }
+  reduxStore = storeInstance;
+  reduxDispatch = storeInstance.dispatch;
+};
 
 // Create axios instance with default config
 const axiosInstance = axios.create({
@@ -9,9 +20,9 @@ const axiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
-    'Cache-Control': 'no-cache',
+    'Cache-Control': 'no-cache'
   },
-  withCredentials: true, // Important for cookies
+  withCredentials: true
 });
 
 // Track if a token refresh is in progress
@@ -19,7 +30,7 @@ let isRefreshing = false;
 let failedQueue = [];
 
 const processQueue = (error, token = null) => {
-  failedQueue.forEach(prom => {
+  failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
@@ -35,11 +46,19 @@ axiosInstance.interceptors.request.use(
     // Log request
     console.log(`[${config.method?.toUpperCase()}] ${config.url}`, {
       params: config.params,
-      data: config.data,
+      data: config.data
     });
 
     // Add auth token to request
-    const token = getToken();
+    // const token = getToken();
+    let token = null;
+    if (reduxStore) {
+      const { auth } = reduxStore.getState();
+      token = auth.token;
+    } else {
+      token = getCookie('accessToken');
+    }
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -60,7 +79,7 @@ axiosInstance.interceptors.response.use(
   (response) => {
     // Log successful response
     console.log(`[${response.config.method?.toUpperCase()} ${response.status}] ${response.config.url}`, {
-      data: response.data,
+      data: response.data
     });
 
     // Handle custom success messages from API
@@ -68,16 +87,16 @@ axiosInstance.interceptors.response.use(
       enqueueSnackbar(response.data.message, { variant: 'success' });
     }
 
-    return response.data;
+    return response;
   },
   async (error) => {
     const originalRequest = error.config;
-    
+
     // Log error
     console.error('Response Error:', {
       url: originalRequest?.url,
       status: error.response?.status,
-      data: error.response?.data,
+      data: error.response?.data
     });
 
     // Handle network errors
@@ -85,7 +104,7 @@ axiosInstance.interceptors.response.use(
       enqueueSnackbar('Lỗi mạng. Vui lòng kiểm tra kết nối của bạn.', { variant: 'error' });
       return Promise.reject({
         message: 'Lỗi mạng. Vui lòng kiểm tra kết nối internet của bạn.',
-        isNetworkError: true,
+        isNetworkError: true
       });
     }
 
@@ -111,38 +130,69 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = getRefreshToken();
+        let refreshToken = null;
+        if (reduxStore) {
+          const { auth } = reduxStore.getState();
+          refreshToken = auth.refreshToken;
+        } else {
+          refreshToken = getCookie('refreshToken');
+        }
+
         if (!refreshToken) {
           throw new Error('Không có refresh token');
         }
 
         // Call refresh token API
         const response = await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL || '/api'}/auth/refresh-token`,
-          { refreshToken }
+          `${import.meta.env.VITE_API_BASE_URL}/auth/refresh-token`,
+          {},
+          {
+            params: { refreshToken }
+          }
         );
 
-        const { accessToken } = response.data;
-        
-        // Update tokens
-        setToken(accessToken);
-        
+        const { token: newAccessToken, refreshToken: newRefreshToken } = response.data.data;
+
+        // Update tokens in Redux store
+        if (reduxStore && reduxDispatch) {
+          reduxDispatch({
+            type: 'auth/refresh-token/fulfilled',
+            payload: {
+              token: newAccessToken,
+              refreshToken: newRefreshToken
+            }
+          });
+        }
+
+        setCookie('accessToken', newAccessToken, { expires: 1 });
+        setCookie('refreshToken', newRefreshToken, { expires: 7 });
+
         // Update auth header
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
         // Process queued requests
-        processQueue(null, accessToken);
-        
+        processQueue(null, newAccessToken);
+
         // Retry original request
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        // If refresh fails, clear auth and redirect to login
-        clearAuthData();
+        if (reduxStore && reduxDispatch) {
+          reduxDispatch({ type: 'auth/resetAuthState' });
+        }
+
+        // Clear cookies
+        removeCookie('accessToken');
+        removeCookie('refreshToken');
+        removeCookie('user');
+
+        enqueueSnackbar('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', { variant: 'error' });
         processQueue(refreshError, null);
+
         window.location.href = '/login?session=expired';
+
         return Promise.reject({
           message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
-          isAuthError: true,
+          isAuthError: true
         });
       } finally {
         isRefreshing = false;
@@ -151,16 +201,16 @@ axiosInstance.interceptors.response.use(
 
     // Handle common error statuses
     let errorMessage = data?.message || 'Đã xảy ra lỗi không xác định';
-    
+
     switch (status) {
       case 400:
         errorMessage = data.message || 'Yêu cầu không hợp lệ';
         break;
       case 403:
         errorMessage = 'Bạn không có quyền thực hiện hành động này';
-        enqueueSnackbar(errorMessage, { 
+        enqueueSnackbar(errorMessage, {
           variant: 'error',
-          autoHideDuration: 5000,
+          autoHideDuration: 5000
         });
         break;
       case 404:
@@ -171,7 +221,7 @@ axiosInstance.interceptors.response.use(
         // Handle validation errors (return them to the form)
         return Promise.reject({
           ...data,
-          isValidationError: true,
+          isValidationError: true
         });
       case 429:
         errorMessage = 'Quá nhiều yêu cầu. Vui lòng thử lại sau.';
@@ -191,7 +241,7 @@ axiosInstance.interceptors.response.use(
       message: errorMessage,
       errors: data?.errors,
       code: data?.code,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     });
   }
 );

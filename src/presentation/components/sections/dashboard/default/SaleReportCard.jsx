@@ -7,7 +7,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
 // project imports
-import SalesChart from 'sections/dashboard/SalesChart';
+import SalesChart from '../SalesChart';
 
 // sales report status
 const status = [

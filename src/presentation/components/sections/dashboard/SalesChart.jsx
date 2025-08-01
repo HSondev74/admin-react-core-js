@@ -12,7 +12,7 @@ import Box from '@mui/material/Box';
 import { BarChart } from '@mui/x-charts/BarChart';
 
 // project imports
-import MainCard from 'components/MainCard';
+import MainCard from '../../MainCard';
 
 // ==============================|| SALES COLUMN CHART ||============================== //
 

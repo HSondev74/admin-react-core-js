@@ -1,9 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState, useCallback } from 'react';
-import rolesApi from '../../api/roles';
+import rolesApi from '../../../infrastructure/api/http/role';
 
 // until
-import { formatDateVN } from '../../utils/dateUtils';
+import { formatDateVN } from '../../../app/utils/dateUtils';
 
 // Custom components
 import CustomDataPage from '../../components/CustomTable/CustomDataPage';
@@ -11,7 +11,7 @@ import CustomDataPage from '../../components/CustomTable/CustomDataPage';
 import RoleFormAction from './RoleFormAction';
 
 //notification
-import { useNotification } from '../../contexts/NotificationContext';
+import { useNotification } from '../../../contexts/NotificationContext';
 
 const RoleManagementPage = () => {
   // State

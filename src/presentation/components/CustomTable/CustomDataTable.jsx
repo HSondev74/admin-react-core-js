@@ -20,7 +20,7 @@ import { Menu, MenuItem } from '@mui/material';
 //antd icon
 import { ArrowDownOutlined, ArrowRightOutlined, DeleteOutlined, EditOutlined, EyeOutlined, MoreOutlined } from '@ant-design/icons';
 // style
-import { tableStyles } from '../../../utils/style/tableStyles';
+import { tableStyles } from '../../assets/styles/tableStyles';
 
 /**
  * Bảng dữ liệu tùy chỉnh với khả năng sắp xếp, phân trang, chọn nhiều, và các hành động

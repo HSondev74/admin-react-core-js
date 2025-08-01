@@ -13,23 +13,23 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
 // project imports
-import MainCard from 'components/MainCard';
-import AnalyticEcommerce from 'components/cards/statistics/AnalyticEcommerce';
-import MonthlyBarChart from 'sections/dashboard/default/MonthlyBarChart';
-import ReportAreaChart from 'sections/dashboard/default/ReportAreaChart';
-import UniqueVisitorCard from 'sections/dashboard/default/UniqueVisitorCard';
-import SaleReportCard from 'sections/dashboard/default/SaleReportCard';
-import OrdersTable from 'sections/dashboard/default/OrdersTable';
+import MainCard from '../../components/MainCard';
+import AnalyticEcommerce from '../../components/cards/statistics/AnalyticEcommerce';
+import MonthlyBarChart from '../../components/sections/dashboard/default/MonthlyBarChart';
+import ReportAreaChart from '../../components/sections/dashboard/default/ReportAreaChart';
+import UniqueVisitorCard from '../../components/sections/dashboard/default/UniqueVisitorCard';
+import SaleReportCard from '../../components/sections/dashboard/default/SaleReportCard';
+import OrdersTable from '../../components/sections/dashboard/default/OrdersTable';
 
 // assets
 import GiftOutlined from '@ant-design/icons/GiftOutlined';
 import MessageOutlined from '@ant-design/icons/MessageOutlined';
 import SettingOutlined from '@ant-design/icons/SettingOutlined';
 
-import avatar1 from 'assets/images/users/avatar-1.png';
-import avatar2 from 'assets/images/users/avatar-2.png';
-import avatar3 from 'assets/images/users/avatar-3.png';
-import avatar4 from 'assets/images/users/avatar-4.png';
+import avatar1 from '../../assets/images/users/avatar-1.png';
+import avatar2 from '../../assets/images/users/avatar-2.png';
+import avatar3 from '../../assets/images/users/avatar-3.png';
+import avatar4 from '../../assets/images/users/avatar-4.png';
 
 // avatar style
 const avatarSX = {

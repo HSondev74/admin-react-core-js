@@ -14,33 +14,23 @@ import ProfileOutlined from '@ant-design/icons/ProfileOutlined';
 import LogoutOutlined from '@ant-design/icons/LogoutOutlined';
 import UserOutlined from '@ant-design/icons/UserOutlined';
 import WalletOutlined from '@ant-design/icons/WalletOutlined';
+import { useAuthActions } from '../../../../../../../infrastructure/hooks/useAuthActions.js';
 
 // ==============================|| HEADER PROFILE - PROFILE TAB ||============================== //
 
 export default function ProfileTab({ handleClose }) {
-  const { logout } = useAuth();
+  const { logout } = useAuthActions();
   const { showNotification } = useNotification();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
-      // Close the profile dropdown
       if (handleClose) {
         handleClose();
       }
-
-      // Call the logout function from AuthContext
-      const result = await logout();
-      if (result.success) {
-        showNotification('Đăng xuất thành công!', 'success');
-        // Navigate to login page
-        navigate('/login', { replace: true });
-      } else {
-        showNotification('Đăng xuất thất bại: ' + (result.error?.message || 'Lỗi không xác định'), 'error');
-      }
+      await logout();
     } catch (error) {
-      console.error('Logout error:', error);
-      showNotification('Đăng xuất thất bại: ' + (error.message || 'Lỗi không xác định'), 'error');
+      showNotification(error, 'error');
     }
   };
 
@@ -81,4 +71,4 @@ export default function ProfileTab({ handleClose }) {
   );
 }
 
-ProfileTab.propTypes = { handleLogout: PropTypes.func };
+ProfileTab.propTypes = { handleClose: PropTypes.func };

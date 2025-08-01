@@ -1,52 +1,52 @@
-"use client"
+'use client';
 
-import React from "react"
-import { Link as RouterLink, useNavigate } from "react-router-dom"
+import React from 'react';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 // material-ui
-import Button from "@mui/material/Button"
-import Checkbox from "@mui/material/Checkbox"
-import FormControlLabel from "@mui/material/FormControlLabel"
-import FormHelperText from "@mui/material/FormHelperText"
-import Grid from "@mui/material/Grid2"
-import Link from "@mui/material/Link"
-import InputAdornment from "@mui/material/InputAdornment"
-import InputLabel from "@mui/material/InputLabel"
-import OutlinedInput from "@mui/material/OutlinedInput"
-import Typography from "@mui/material/Typography"
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormHelperText from '@mui/material/FormHelperText';
+import Grid from '@mui/material/Grid2';
+import Link from '@mui/material/Link';
+import InputAdornment from '@mui/material/InputAdornment';
+import InputLabel from '@mui/material/InputLabel';
+import OutlinedInput from '@mui/material/OutlinedInput';
+import Typography from '@mui/material/Typography';
 
 // third-party
-import * as Yup from "yup"
-import { Formik } from "formik"
+import * as Yup from 'yup';
+import { Formik } from 'formik';
 
 // project imports
-import IconButton from "../../@extended/IconButton"
-import AnimateButton from "../../@extended/AnimateButton"
-import { useAuthActions } from "infrastructure/hooks/useAuthActions"
+import IconButton from '../../@extended/IconButton';
+import AnimateButton from '../../@extended/AnimateButton';
+import { useAuthActions } from 'infrastructure/hooks/useAuthActions';
 
 // assets
-import EyeOutlined from "@ant-design/icons/EyeOutlined"
-import EyeInvisibleOutlined from "@ant-design/icons/EyeInvisibleOutlined"
-import dashboardPreview from "../../../assets/images/auth/dashboard-preview.jpeg"
-import logo from "../../../assets/images/logo/logo.png"
+import EyeOutlined from '@ant-design/icons/EyeOutlined';
+import EyeInvisibleOutlined from '@ant-design/icons/EyeInvisibleOutlined';
+import dashboardPreview from '../../../assets/images/auth/dashboard-preview.jpeg';
+import logo from '../../../assets/images/logo/logo.png';
 
 // styles
-import "../../../assets/styles/login.css"
+import '../../../assets/styles/login.css';
 
 export default function AuthLogin() {
-  const [checked, setChecked] = React.useState(false)
-  const [showPassword, setShowPassword] = React.useState(false)
-  const [loginError, setLoginError] = React.useState(null)
-  const { login, loading } = useAuthActions()
-  const navigate = useNavigate()
+  const [checked, setChecked] = React.useState(false);
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [loginError, setLoginError] = React.useState(null);
+  const { login, loading } = useAuthActions();
+  const navigate = useNavigate();
 
   const handleClickShowPassword = () => {
-    setShowPassword(!showPassword)
-  }
+    setShowPassword(!showPassword);
+  };
 
   const handleMouseDownPassword = (event) => {
-    event.preventDefault()
-  }
+    event.preventDefault();
+  };
 
   return (
     <div className="login-container">
@@ -69,44 +69,47 @@ export default function AuthLogin() {
           <div className="form-section">
             <Formik
               initialValues={{
-                email: "sellostore@company.com",
-                password: "Sellostore.",
-                submit: null,
+                username: 'admin',
+                password: 'admin123',
+                submit: null
               }}
               validationSchema={Yup.object().shape({
-                email: Yup.string().email("Email không hợp lệ").max(255).required("Email không được bỏ trống"),
+                username: Yup.string()
+                  .min(3, 'Tên đăng nhập phải có ít nhất 3 ký tự')
+                  .max(50, 'Tên đăng nhập không được vượt quá 50 ký tự')
+                  .required('Tên đăng nhập không được bỏ trống'),
                 password: Yup.string()
-                  .required("Mật khẩu không được bỏ trống")
+                  .required('Mật khẩu không được bỏ trống')
                   .test(
-                    "no-leading-trailing-whitespace",
-                    "Mật khẩu không được bắt đầu hoặc kết thúc bằng khoảng trắng",
-                    (value) => value === value.trim(),
+                    'no-leading-trailing-whitespace',
+                    'Mật khẩu không được bắt đầu hoặc kết thúc bằng khoảng trắng',
+                    (value) => value === value.trim()
                   )
-                  .max(10, "Mật khẩu phải ít hơn 10 ký tự"),
+                  .max(10, 'Mật khẩu phải ít hơn 10 ký tự')
               })}
               onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
                 try {
-                  setLoginError(null)
+                  setLoginError(null);
                   const result = await login({
-                    email: values.email,
-                    password: values.password,
-                  })
-                  if (result.success) {
-                    setStatus({ success: true })
-                    navigate("/dashboard/default")
+                    username: values.username,
+                    password: values.password
+                  });
+                  if (result.data.success) {
+                    setStatus({ success: true });
+                    navigate('/dashboard/default');
                   } else {
-                    setStatus({ success: false })
-                    const errorMessage = result.error || "Đăng nhập thất bại"
-                    setErrors({ submit: errorMessage })
-                    setLoginError(errorMessage)
+                    setStatus({ success: false });
+                    const errorMessage = result.error || 'Đăng nhập thất bại';
+                    setErrors({ submit: errorMessage });
+                    setLoginError(errorMessage);
                   }
                 } catch (err) {
-                  setStatus({ success: false })
-                  const errorMessage = err.message || "Đã xảy ra lỗi không xác định"
-                  setErrors({ submit: errorMessage })
-                  setLoginError(errorMessage)
+                  setStatus({ success: false });
+                  const errorMessage = err.message || 'Đã xảy ra lỗi không xác định';
+                  setErrors({ submit: errorMessage });
+                  setLoginError(errorMessage);
                 } finally {
-                  setSubmitting(false)
+                  setSubmitting(false);
                 }
               }}
             >
@@ -116,23 +119,23 @@ export default function AuthLogin() {
                     <Grid size={12}>
                       <div className="form-group">
                         <InputLabel htmlFor="email-login" className="form-label">
-                          Email
+                          Username
                         </InputLabel>
                         <OutlinedInput
-                          id="email-login"
-                          type="email"
-                          value={values.email}
-                          name="email"
+                          id="username-login"
+                          type="string"
+                          value={values.username}
+                          name="username"
                           onBlur={handleBlur}
                           onChange={handleChange}
                           placeholder="sellostore@company.com"
                           fullWidth
-                          error={Boolean(touched.email && errors.email)}
+                          error={Boolean(touched.username && errors.username)}
                           className="form-input"
                         />
-                        {touched.email && errors.email && (
+                        {touched.username && errors.username && (
                           <FormHelperText error id="standard-weight-helper-text-email-login">
-                            {errors.email}
+                            {errors.username}
                           </FormHelperText>
                         )}
                       </div>
@@ -147,7 +150,7 @@ export default function AuthLogin() {
                           fullWidth
                           error={Boolean(touched.password && errors.password)}
                           id="password-login"
-                          type={showPassword ? "text" : "password"}
+                          type={showPassword ? 'text' : 'password'}
                           value={values.password}
                           name="password"
                           onBlur={handleBlur}
@@ -212,7 +215,7 @@ export default function AuthLogin() {
                           disabled={isSubmitting || loading}
                           className="login-button"
                         >
-                          {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+                          {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
                         </Button>
                       </AnimateButton>
                     </Grid>
@@ -261,7 +264,7 @@ export default function AuthLogin() {
 
                     <Grid size={12}>
                       <div className="register-link">
-                        {"Bạn chưa có tài khoản? "}
+                        {'Bạn chưa có tài khoản? '}
                         <Link component={RouterLink} to="/register" className="register-link-text">
                           Đăng ký ngay.
                         </Link>
@@ -287,22 +290,13 @@ export default function AuthLogin() {
       <div className="login-right">
         <div className="marketing-content">
           <Typography className="marketing-title">Quản lý đội ngũ và hoạt động của bạn.</Typography>
-          <Typography className="marketing-subtitle">
-            Đăng nhập để truy cập bảng điều khiển ERP và quản lý đội ngũ của bạn.
-          </Typography>
+          <Typography className="marketing-subtitle">Đăng nhập để truy cập bảng điều khiển ERP và quản lý đội ngũ của bạn.</Typography>
 
           <div className="dashboard-preview">
-            <img
-              src={dashboardPreview}
-              alt="Dashboard Preview"
-              width={700}
-              height={700}
-              className="preview-image"
-            />
+            <img src={dashboardPreview} alt="Dashboard Preview" width={700} height={700} className="preview-image" />
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
-

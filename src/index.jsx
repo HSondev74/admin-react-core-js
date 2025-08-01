@@ -34,12 +34,14 @@ import '@fontsource/public-sans/700.css';
 // project imports
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { setReduxStore } from './app/config/axiosInstance';
+import store from './infrastructure/store/store';
 
 const container = document.getElementById('root');
 const root = createRoot(container);
 
 // ==============================|| MAIN - REACT DOM RENDER ||============================== //
-
+setReduxStore(store);
 root.render(<App />);
 
 // If you want to start measuring performance in your app, pass a function
