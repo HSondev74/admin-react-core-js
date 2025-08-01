@@ -1,7 +1,7 @@
 // Container Component
-import AdvancedFilter from '../../components/ui/AdvancedFilter';
-import CustomSelectField from '../../components/ui/CustomSelectField';
-import CustomInputField from '../../components/ui/CustomInputField';
+import AdvancedFilter from '../../components/UI/AdvancedFilter';
+import CustomSelectField from '../../components/UI/CustomSelectField';
+import CustomInputField from '../../components/UI/CustomInputField';
 
 // Material UI components
 import Grid from '@mui/material/Grid';

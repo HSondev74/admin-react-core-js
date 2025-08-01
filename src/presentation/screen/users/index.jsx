@@ -1,9 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState, useCallback } from 'react';
-import usersApi from '../../api/users';
+import usersApi from '../../../infrastructure/api/http/users';
 
 // until
-import { formatDateVN } from '../../utils/dateUtils';
+import { formatDateVN } from '../../../app/utils/dateUtils';
 
 // Custom components
 import CustomDataPage from '../../components/CustomTable/CustomDataPage';
@@ -11,7 +11,7 @@ import CustomDataPage from '../../components/CustomTable/CustomDataPage';
 import UserFormAction from './UserFormAction';
 import UserAdvancedFilter from './UserAdvancedFilter'; // Component lọc nâng cao
 //notification
-import { useNotification } from '../../contexts/NotificationContext';
+import { useNotification } from '../../../contexts/NotificationContext';
 import { Switch } from '@mui/material';
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';

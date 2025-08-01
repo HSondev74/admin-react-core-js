@@ -1,8 +1,8 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
-import { alpha } from '@mui/material/styles';
+import { alpha, useTheme } from '@mui/material/styles';
 
 const NotificationContext = createContext(null);
 
@@ -12,6 +12,8 @@ export const NotificationProvider = ({ children }) => {
     message: '',
     severity: 'info' // 'error', 'warning', 'info', 'success'
   });
+
+  const theme = useTheme();
 
   const showNotification = (message, severity = 'info') => {
     setNotification({
@@ -47,45 +49,20 @@ export const NotificationProvider = ({ children }) => {
           onClose={hideNotification}
           severity={notification.severity}
           variant="standard"
-          sx={(theme) => ({
+          sx={{
             width: '100%',
             fontSize: '1.1rem',
             '& .MuiAlert-icon': { fontSize: '1.5rem' },
             py: 1.5,
             backdropFilter: 'blur(10px)',
-            backgroundColor: alpha(
-              notification.severity === 'success'
-                ? theme.palette.success.main
-                : notification.severity === 'error'
-                  ? theme.palette.error.main
-                  : notification.severity === 'warning'
-                    ? theme.palette.warning.main
-                    : theme.palette.info.main,
-              0.15
-            ),
+            backgroundColor: alpha(theme.palette[notification.severity].main, 0.15),
             border: '1px solid',
-            borderColor: alpha(
-              notification.severity === 'success'
-                ? theme.palette.success.main
-                : notification.severity === 'error'
-                  ? theme.palette.error.main
-                  : notification.severity === 'warning'
-                    ? theme.palette.warning.main
-                    : theme.palette.info.main,
-              0.3
-            ),
-            color:
-              notification.severity === 'success'
-                ? theme.palette.success.dark
-                : notification.severity === 'error'
-                  ? theme.palette.error.dark
-                  : notification.severity === 'warning'
-                    ? theme.palette.warning.dark
-                    : theme.palette.info.dark,
+            borderColor: alpha(theme.palette[notification.severity].main, 0.3),
+            color: theme.palette[notification.severity].main,
             boxShadow: theme.shadows[1]
-          })}
+          }}
         >
-          {notification.message}
+          {typeof notification.message === 'string' ? notification.message : notification.message.message}
         </Alert>
       </Snackbar>
     </NotificationContext.Provider>

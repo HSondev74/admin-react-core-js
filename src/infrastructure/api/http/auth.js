@@ -65,9 +65,9 @@ class AuthApi extends BaseApi {
     }
   }
 
-  async refreshToken() {
-    const refreshToken = getCookie('refreshToken');
-    const response = await this.post('/token/refresh', { refreshToken });
+  async refreshToken(refreshTokenValue) {
+    const refreshToken = refreshTokenValue || getCookie('refreshToken');
+    const response = await this.post('/auth/refresh-token', {}, { params: { refreshToken } });
     return response;
   }
 

@@ -13,7 +13,7 @@ import Divider from '@mui/material/Divider';
 // Ant Design Icons
 import { PlusOutlined, SearchOutlined, FilterOutlined } from '@ant-design/icons';
 // style
-import { pageStyles, modalWrapperStyles } from '../../../utils/style/pageStyles';
+import { pageStyles, modalWrapperStyles } from '../../assets/styles/pageStyles';
 // Project components
 import MainCard from '../MainCard';
 import CustomDataTable from './CustomDataTable';

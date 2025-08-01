@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from 'react';
-import rolesApi from '../../api/roles';
+import rolesApi from '../../../infrastructure/api/http/role';
 
 // Material UI components
 import Grid from '@mui/material/Grid';
@@ -14,7 +14,7 @@ import * as Yup from 'yup';
 import { Formik, Form } from 'formik';
 
 // style
-import { formStyles, formViewStyles } from '../../utils/style/formStyles';
+import { formStyles, formViewStyles } from '../../assets/styles/formStyles';
 
 const RoleFormAction = ({ item, onClose, onSubmit, title, isView }) => {
   const [role, setRole] = useState(item);

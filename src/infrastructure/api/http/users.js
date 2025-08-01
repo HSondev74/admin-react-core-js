@@ -91,7 +91,7 @@ class UsersApi extends BaseApi {
 
       const queryString = new URLSearchParams(mappedParams).toString();
 
-      return await this.get(`/all?${queryString}`);
+      return await this.post(`/search?${queryString}`);
     } catch (error) {
       throw error;
     }

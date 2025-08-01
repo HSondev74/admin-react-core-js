@@ -2,6 +2,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { login, logout, register } from '../store/slices/authSlice';
 import { useAuthService } from '../services/authService';
+import { persistor } from '../store/store';
 
 export const useAuthActions = () => {
   const dispatch = useDispatch();
@@ -11,13 +12,7 @@ export const useAuthActions = () => {
 
   const handleLogin = async (credentials) => {
     try {
-      const { data, error } = await authService.login(credentials);
-      
-      if (error) {
-        return { success: false, error };
-      }
-      
-      const result = await dispatch(login(data)).unwrap();
+      const result = await dispatch(login(credentials)).unwrap();
       return { success: true, data: result };
     } catch (error) {
       return { success: false, error: error.message || 'Login failed' };
@@ -26,28 +21,23 @@ export const useAuthActions = () => {
 
   const handleLogout = async () => {
     try {
-      await authService.logout();
-      await dispatch(logout()).unwrap();
+      const res = await dispatch(logout()).unwrap();
+      persistor.purge();
       navigate('/login');
-      return { success: true };
+      return res;
     } catch (error) {
-      // Even if API call fails, clear local state
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      dispatch(logout());
-      navigate('/login');
-      return { success: true };
+      return { success: false, error: error.message || 'Đăng xuất thất bại' };
     }
   };
 
   const handleRegister = async (userData) => {
     try {
       const { data, error } = await authService.register(userData);
-      
+
       if (error) {
         return { success: false, error };
       }
-      
+
       const result = await dispatch(register(data)).unwrap();
       return { success: true, data: result };
     } catch (error) {
@@ -60,6 +50,6 @@ export const useAuthActions = () => {
     logout: handleLogout,
     register: handleRegister,
     loading,
-    error,
+    error
   };
 };

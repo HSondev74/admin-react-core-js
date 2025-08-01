@@ -19,10 +19,10 @@ import * as Yup from 'yup';
 import { Formik } from 'formik';
 
 // project imports
-import IconButton from '../../../../../presentation/components/@extended/IconButton';
-import AnimateButton from 'components/@extended/AnimateButton';
+import IconButton from '../../@extended/IconButton';
+import AnimateButton from '../../@extended/AnimateButton';
 
-import { strengthColor, strengthIndicator } from 'utils/password-strength';
+import { strengthColor, strengthIndicator } from '../../../../app/utils/password-strength';
 
 // assets
 import EyeOutlined from '@ant-design/icons/EyeOutlined';
