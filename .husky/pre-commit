@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+set -e
+
+echo "🔍 Running lint checks..."
+npx eslint --config eslint.config.js "src/**/*.{js,jsx,ts,tsx}" --fix
+
+if [ $? -ne 0 ]; then
+  echo "❌ Lint checks failed. Please fix the issues before committing."
+  exit 1
+else
+  echo "✅ Lint checks passed!"
+fi
+
+echo "✅ Lint checks passed!"
