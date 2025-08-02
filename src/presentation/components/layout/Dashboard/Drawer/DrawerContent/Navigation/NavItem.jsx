@@ -13,20 +13,24 @@ import { Collapse } from '@mui/material';
 import Box from '@mui/material/Box';
 import Fade from '@mui/material/Fade';
 import Popper from '@mui/material/Popper';
-import Grow from '@mui/material/Grow';
+import { Grow } from '@mui/material';
+
 // project imports
 import IconButton from '../../../../../@extended/IconButton';
 
 import { handlerDrawerOpen, useGetMenuMaster } from '../../../../../../../infrastructure/api/http/menu';
-
+// Icon ant design
 import { DownOutlined } from '@ant-design/icons';
 import { RightOutlined } from '@ant-design/icons';
-import { useRef, useState } from 'react';
+// Hook
+import { useRef, useState, useCallback } from 'react';
 import NavSubMenu from './NavSubMenu';
 
 // ==============================|| NAVIGATION - LIST ITEM ||============================== //
 
 export default function NavItem({ item, level, isParents = false, setSelectedID }) {
+  console.log('NavItem item', item);
+
   const { menuMaster } = useGetMenuMaster();
   const drawerOpen = menuMaster.isDashboardDrawerOpened;
 
@@ -63,7 +67,11 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
   const textColor = 'text.primary';
   const iconSelectedColor = 'primary.main';
 
-  // Condition dynamic dashboard (side bar)
+  /**
+   *
+   *<=================== Condition dynamic dashboard (side bar) ===================>
+   *
+   */
   const [isOpen, setIsOpen] = useState(false);
   const hasChild = Array.isArray(item.children) && item.children.length > 0;
   const showIcon = Array.isArray(item.children) && item.children.length > 0 && !item.children.every((child) => child.type === 'button');
@@ -71,11 +79,30 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
 
   // Condition dynamic dashboard (popup)
   const [showSubMenu, setShowSubMenu] = useState(false);
+  const [isHoverable, setIsHoverable] = useState(true);
+  const hoverTimeoutRef = useRef(null);
+
+  const handleMouseEnter = useCallback(() => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    setShowSubMenu(true);
+    setIsHoverable(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsHoverable(false);
+
+    hoverTimeoutRef.current = setTimeout(() => {
+      setShowSubMenu(false);
+    }, 100); // Delay 100ms trước khi đóng
+  }, []);
+
   const handleClick = (e) => {
-    if (isSubMenu) {
+    if (isSubMenu && drawerOpen) {
       e.preventDefault();
-      setIsOpen((prev) => !prev);
-    } else {
+      setIsOpen((prev) => !prev); // Ony navigate when there is no submenu
+    } else if (!isSubMenu) {
       itemHandler();
     }
   };
@@ -91,8 +118,8 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
           disabled={item.disabled}
           selected={isSelected}
           onClick={handleClick}
-          onMouseEnter={() => setShowSubMenu(true)}
-          onMouseLeave={() => setShowSubMenu(false)}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
           sx={(theme) => ({
             zIndex: 1201,
             pl: drawerOpen ? `${level * 28}px` : 1.5,
@@ -116,6 +143,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
         >
           {itemIcon && level === 1 && (
             <ListItemIcon
+              ref={iconRef}
               sx={(theme) => ({
                 minWidth: 28,
                 color: isSelected ? iconSelectedColor : textColor,
@@ -138,6 +166,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
               {itemIcon}
             </ListItemIcon>
           )}
+
           {/* Popper submenu */}
           {hasChild && !drawerOpen && (
             <Popper
@@ -145,19 +174,46 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
               anchorEl={buttonRef.current}
               placement="right-start"
               disablePortal={false}
-              style={{ zIndex: 2100 }}
-              onMouseEnter={() => setShowSubMenu(true)}
+              style={{ zIndex: 2100, pointerEvents: isHoverable ? 'auto' : 'none' }}
+              modifiers={[
+                {
+                  name: 'offset',
+                  options: {
+                    offset: [0, 0] // Điều chỉnh vị trí
+                  }
+                },
+                {
+                  name: 'preventOverflow',
+                  options: {
+                    boundary: 'viewport'
+                  }
+                }
+              ]}
+              onMouseEnter={handleMouseEnter}
               transition
             >
               {({ TransitionProps }) => (
-                <Grow {...TransitionProps} style={{ transformOrigin: 'top left' }} timeout={500}>
-                  <Box>
-                    <NavSubMenu items={item.children} level={level + 1} setSelectedID={setSelectedID} />
+                <Grow {...TransitionProps} style={{ transformOrigin: 'top left' }} timeout={400}>
+                  <Box
+                    sx={{
+                      // Add transform to fix positioning
+                      pointerEvents: isHoverable ? 'auto' : 'none',
+                      mt: level == 1 ? 1 : 0
+                    }}
+                    onMouseEnter={isHoverable ? handleMouseEnter : undefined} //Conditional hover
+                  >
+                    <NavSubMenu
+                      items={item.children.filter((child) => child.type != 'button')}
+                      level={level + 1}
+                      setSelectedID={setSelectedID}
+                    />
                   </Box>
                 </Grow>
               )}
             </Popper>
           )}
+
+          {/* Show popup */}
           {(drawerOpen || (!drawerOpen && level !== 1)) && (
             <ListItemText
               primary={
@@ -178,6 +234,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
               }
             />
           )}
+
           {(drawerOpen || (!drawerOpen && level !== 1)) && item.chip && (
             <Chip
               color={item.chip.color}
@@ -188,6 +245,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
             />
           )}
 
+          {/* Show icon  */}
           {showIcon && drawerOpen && (
             <Fade in={drawerOpen} timeout={300} unmountOnExit>
               <Box sx={{ marginRight: '2px' }}>
