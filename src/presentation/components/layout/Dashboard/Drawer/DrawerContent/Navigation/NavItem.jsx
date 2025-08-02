@@ -86,16 +86,24 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
     }
-    setShowSubMenu(true);
+
     setIsHoverable(true);
-  }, []);
+
+    hoverTimeoutRef.current = setTimeout(() => {
+      setShowSubMenu(true);
+    }, 100);
+  });
 
   const handleMouseLeave = useCallback(() => {
     setIsHoverable(false);
 
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+
     hoverTimeoutRef.current = setTimeout(() => {
       setShowSubMenu(false);
-    }, 100); // Delay 100ms trước khi đóng
+    }, 100);
   }, []);
 
   const handleClick = (e) => {
@@ -177,7 +185,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
               transition
             >
               {({ TransitionProps }) => (
-                <Fade {...TransitionProps} timeout={200}>
+                <Grow {...TransitionProps} style={{ transformOrigin: 'top left' }} timeout={200}>
                   <Box
                     sx={{
                       // Add transform to fix positioning
@@ -192,7 +200,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
                       setSelectedID={setSelectedID}
                     />
                   </Box>
-                </Fade>
+                </Grow>
               )}
             </Popper>
           )}
