@@ -177,7 +177,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
               transition
             >
               {({ TransitionProps }) => (
-                <Grow {...TransitionProps} style={{ transformOrigin: 'left' }} timeout={400}>
+                <Fade {...TransitionProps} timeout={200}>
                   <Box
                     sx={{
                       // Add transform to fix positioning
@@ -192,7 +192,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
                       setSelectedID={setSelectedID}
                     />
                   </Box>
-                </Grow>
+                </Fade>
               )}
             </Popper>
           )}
