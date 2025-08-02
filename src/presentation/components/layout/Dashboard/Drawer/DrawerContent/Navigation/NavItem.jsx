@@ -143,7 +143,6 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
         >
           {itemIcon && level === 1 && (
             <ListItemIcon
-              ref={iconRef}
               sx={(theme) => ({
                 minWidth: 28,
                 color: isSelected ? iconSelectedColor : textColor,
@@ -175,21 +174,6 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
               placement="right-start"
               disablePortal={false}
               style={{ zIndex: 2100, pointerEvents: isHoverable ? 'auto' : 'none' }}
-              modifiers={[
-                {
-                  name: 'offset',
-                  options: {
-                    offset: [0, 0] // Điều chỉnh vị trí
-                  }
-                },
-                {
-                  name: 'preventOverflow',
-                  options: {
-                    boundary: 'viewport'
-                  }
-                }
-              ]}
-              onMouseEnter={handleMouseEnter}
               transition
             >
               {({ TransitionProps }) => (
