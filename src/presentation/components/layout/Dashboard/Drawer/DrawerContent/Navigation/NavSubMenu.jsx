@@ -1,10 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { Box, Popper } from '@mui/material';
+import { Box } from '@mui/material';
 import NavItem from './NavItem';
-import Grow from '@mui/material/Grow';
 
 export default function NavSubMenu({ items, level = 1, setSelectedID }) {
-  const [hoveredChild, setHoveredChild] = useState(null);
   const anchorRefs = useRef([]);
   anchorRefs.current = []; // Reset ref mỗi lần render
 
