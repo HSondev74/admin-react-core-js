@@ -19,8 +19,11 @@ import IconButton from '../../../../../@extended/IconButton';
 
 import { handlerDrawerOpen, useGetMenuMaster } from '../../../../../../../infrastructure/api/http/menu';
 
+// Icon ant design
 import { DownOutlined } from '@ant-design/icons';
 import { RightOutlined } from '@ant-design/icons';
+
+// Hooks
 import { useRef, useState } from 'react';
 import NavSubMenu from './NavSubMenu';
 
@@ -63,7 +66,11 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
   const textColor = 'text.primary';
   const iconSelectedColor = 'primary.main';
 
-  // Condition dynamic dashboard (side bar)
+  /**
+   *
+   *<=================== Condition dynamic dashboard (side bar) ===================>
+   *
+   */
   const [isOpen, setIsOpen] = useState(false);
   const hasChild = Array.isArray(item.children) && item.children.length > 0;
   const showIcon = Array.isArray(item.children) && item.children.length > 0 && !item.children.every((child) => child.type === 'button');
@@ -71,11 +78,36 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
 
   // Condition dynamic dashboard (popup)
   const [showSubMenu, setShowSubMenu] = useState(false);
+  const [isHoverable, setIsHoverable] = useState(true);
+  const hoverTimeoutRef = useRef(null);
+
+  const handleMouseEnter = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    setIsHoverable(true);
+    hoverTimeoutRef.current = setTimeout(() => {
+      setShowSubMenu(true);
+    }, 100);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHoverable(false);
+
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+
+    hoverTimeoutRef.current = setTimeout(() => {
+      setShowSubMenu(false);
+    }, 100); // Delay 100ms when mouse leaves
+  };
+
   const handleClick = (e) => {
-    if (isSubMenu) {
+    if (isSubMenu && drawerOpen) {
       e.preventDefault();
-      setIsOpen((prev) => !prev);
-    } else {
+      setIsOpen((prev) => !prev); // Ony navigate when there is no submenu
+    } else if (!isSubMenu) {
       itemHandler();
     }
   };
@@ -91,8 +123,8 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
           disabled={item.disabled}
           selected={isSelected}
           onClick={handleClick}
-          onMouseEnter={() => setShowSubMenu(true)}
-          onMouseLeave={() => setShowSubMenu(false)}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
           sx={(theme) => ({
             zIndex: 1201,
             pl: drawerOpen ? `${level * 28}px` : 1.5,
@@ -145,19 +177,32 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
               anchorEl={buttonRef.current}
               placement="right-start"
               disablePortal={false}
-              style={{ zIndex: 2100 }}
-              onMouseEnter={() => setShowSubMenu(true)}
+              style={{ zIndex: 2100, pointerEvents: isHoverable ? 'auto' : 'none' }}
+              onMouseEnter={handleMouseEnter}
               transition
             >
               {({ TransitionProps }) => (
-                <Grow {...TransitionProps} style={{ transformOrigin: 'top left' }} timeout={500}>
-                  <Box>
-                    <NavSubMenu items={item.children} level={level + 1} setSelectedID={setSelectedID} />
+                <Grow {...TransitionProps} style={{ transformOrigin: 'top left' }} timeout={200}>
+                  <Box
+                    sx={{
+                      // Add transform to fix positioning
+                      pointerEvents: isHoverable ? 'auto' : 'none',
+                      mt: level == 1 ? 1 : 0
+                    }}
+                    onMouseEnter={isHoverable ? handleMouseEnter : undefined} //Conditional hover
+                  >
+                    <NavSubMenu
+                      items={item.children.filter((child) => child.type != 'button')}
+                      level={level + 1}
+                      setSelectedID={setSelectedID}
+                    />
                   </Box>
                 </Grow>
               )}
             </Popper>
           )}
+
+          {/* Show popup */}
           {(drawerOpen || (!drawerOpen && level !== 1)) && (
             <ListItemText
               primary={
@@ -188,6 +233,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
             />
           )}
 
+          {/* Show icon  */}
           {showIcon && drawerOpen && (
             <Fade in={drawerOpen} timeout={300} unmountOnExit>
               <Box sx={{ marginRight: '2px' }}>
