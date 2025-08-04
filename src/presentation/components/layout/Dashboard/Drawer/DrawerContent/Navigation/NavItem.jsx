@@ -185,11 +185,8 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
                 <Grow {...TransitionProps} style={{ transformOrigin: 'top left' }} timeout={200}>
                   <Box
                     sx={{
-                      // Add transform to fix positioning
-                      pointerEvents: isHoverable ? 'auto' : 'none',
                       mt: level == 1 ? 1 : 0
                     }}
-                    onMouseEnter={isHoverable ? handleMouseEnter : undefined} //Conditional hover
                   >
                     <NavSubMenu
                       items={item.children.filter((child) => child.type != 'button')}

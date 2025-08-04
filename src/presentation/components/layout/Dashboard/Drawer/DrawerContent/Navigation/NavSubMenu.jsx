@@ -1,13 +1,7 @@
-import React, { useState, useRef } from 'react';
 import { Box } from '@mui/material';
 import NavItem from './NavItem';
 
-export default function NavSubMenu({ items, level = 1, setSelectedID }) {
-  const anchorRefs = useRef([]);
-  anchorRefs.current = []; // Reset ref mỗi lần render
-
-  const handleMenuLeave = () => setHoveredChild(null);
-
+export default function NavSubMenu({ items, level, setSelectedID }) {
   return (
     <Box
       sx={{
@@ -18,10 +12,9 @@ export default function NavSubMenu({ items, level = 1, setSelectedID }) {
         minWidth: '180px',
         ml: 1
       }}
-      onMouseLeave={handleMenuLeave}
     >
       {items.map((item, index) => (
-        <Box key={item.menuId || index} ref={(el) => (anchorRefs.current[index] = el)} sx={{ position: 'relative' }}>
+        <Box key={item.menuId || index}>
           <NavItem item={item} level={level} isParents={true} setSelectedID={setSelectedID} />
         </Box>
       ))}
