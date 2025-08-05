@@ -20,19 +20,51 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 //antd-icon
 import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 // third-party
-import * as Yup from 'yup';
 import { Formik, Form } from 'formik';
 // style
 import { formStyles, formViewStyles } from '../../assets/styles/formStyles';
-import rolesApi from '../../../infrastructure/api/http/role';
 import { validateForm } from '../../../app/utils/formValidation';
+import { arraysEqual } from '../../../app/utils/constants';
 
-const UserFormAction = ({ item, onClose, onSubmit, title, isView }) => {
+const UserFormAction = ({ item, onClose, onSubmit, title, isView, roleList }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [user, setUser] = useState(item);
   const isUpdate = !!item;
-  const [roleList, setRoleList] = useState([]);
-  const [roleSearchValue, setRoleSearchValue] = useState('');
+  const [originalData, setOriginalData] = useState({});
+
+  // Xử lý submit những field có thay đổi khi isUpdate
+  const getChangedField = (original, current) => {
+    const changes = {};
+
+    const fieldsToCheck = ['name', 'email', 'phone', 'roleIds'];
+
+    fieldsToCheck.forEach((field) => {
+      // Xử lý riêng roles
+      if (field === 'roleIds') {
+        const originalroles = original.roleIds || [];
+        const currentroles = current.roleIds || [];
+        if (!arraysEqual(originalroles, currentroles)) {
+          changes.roleIds = currentroles;
+        }
+      }
+      // Xử lý các field còn lại
+      else {
+        const originalValue = original[field] || '';
+        const currentValue = current[field] || '';
+
+        if (originalValue !== currentValue) {
+          changes[field] = currentValue;
+        }
+      }
+    });
+
+    // Luôn gửi kèm Id khi update
+    if (isUpdate && original.id) {
+      changes.id = original.id;
+    }
+
+    return changes;
+  };
 
   // get detail user by id
   const fetchUserDetail = async () => {
@@ -41,29 +73,18 @@ const UserFormAction = ({ item, onClose, onSubmit, title, isView }) => {
     }
     try {
       const response = await usersApi.findUserById(item.id);
-      setUser({ ...response.data, roleList: response.data.roleList.map((role) => role.roleId) });
+      const userData = { ...response.data.data, roleIds: response.data.data.roles.map((role) => role.id) };
+      setUser(userData);
+      setOriginalData(userData);
     } catch (err) {
       console.error('Lỗi khi gọi API:', err);
     } finally {
     }
   };
 
-  // get listrole with params
-  const fetchRoleList = async (roleSearchValue = '') => {
-    try {
-      const response = await rolesApi.getListRole({ roleName: roleSearchValue });
-      setRoleList(response.data);
-    } catch (err) {
-      console.error('Lỗi khi gọi API lấy danh sách role:', err);
-    }
-  };
-
   useEffect(() => {
-    if (!item || !isView) {
-      fetchRoleList(roleSearchValue);
-    }
     fetchUserDetail();
-  }, [item, isView, roleSearchValue]);
+  }, [item]);
 
   const handleClickShowPassword = () => setShowPassword((prev) => !prev);
   const handleMouseDownPassword = (event) => {
@@ -71,13 +92,39 @@ const UserFormAction = ({ item, onClose, onSubmit, title, isView }) => {
   };
 
   const handleSubmit = (data) => {
-    onSubmit(data);
+    console.log('dataSubmit: ', data);
+
+    let dataToSubmit;
+
+    if (isUpdate) {
+      dataToSubmit = getChangedField(originalData, data);
+      console.log('Original data:', originalData);
+      console.log('Changed fields only:', dataToSubmit);
+
+      const hasChanges = Object.keys(dataToSubmit).length > 1;
+      if (!hasChanges) {
+        onClose();
+        return;
+      }
+    } else {
+      dataToSubmit = { ...data };
+    }
+    onSubmit(dataToSubmit);
     onClose();
   };
 
   const initialValues = {
+    name: user?.name || '',
+    username: user?.username || '',
+    password: user?.password || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    roleIds: user?.roleIds || [],
+    lockFlag: user?.lockFlag || '0',
     ...user
   };
+
+  console.log(initialValues);
 
   const validationSchema = !isView ? validateForm(isUpdate) : null;
 
@@ -85,7 +132,6 @@ const UserFormAction = ({ item, onClose, onSubmit, title, isView }) => {
     <>
       <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={handleSubmit} enableReinitialize>
         {({ values, errors, touched, handleChange, setFieldValue }) => {
-          console.log('values', values.lockFlag);
           return (
             <Form>
               <Grid container spacing={2}>
@@ -190,23 +236,23 @@ const UserFormAction = ({ item, onClose, onSubmit, title, isView }) => {
                       multiple
                       options={roleList}
                       disableCloseOnSelect
-                      getOptionLabel={(option) => option.roleName || ''}
+                      getOptionLabel={(option) => option.name || ''}
                       // renderTags={() => null} // Không hiển thị tag
-                      value={Array.isArray(values.roleList) ? roleList.filter((role) => values.roleList.includes(role.id)) : []}
+                      value={Array.isArray(values.roleIds) ? roleList.filter((role) => values.roleIds.includes(role.id)) : []}
                       isOptionEqualToValue={(option, value) => option.id === value.id}
                       onChange={(event, selectedValues) => {
                         setFieldValue(
-                          'roleList',
+                          'roleIds',
                           selectedValues.map((role) => role.id)
                         );
                       }}
                       renderOption={(props, option) => {
                         const { key, ...rest } = props;
-                        const isChecked = Array.isArray(values.roleList) && values.roleList.includes(option.id);
+                        const isChecked = Array.isArray(values.roleIds) && values.roleIds.includes(option.id);
                         return (
                           <li key={key} {...rest} style={{ zIndex: 1 }}>
                             <Checkbox style={{ marginRight: 8 }} checked={isChecked} />
-                            {option.roleName}
+                            {option.name}
                           </li>
                         );
                       }}
@@ -222,35 +268,35 @@ const UserFormAction = ({ item, onClose, onSubmit, title, isView }) => {
                           }}
                         />
                       )}
-                      disabled={isView || roleList.length === 0}
+                      disabled={isView}
                     />
                   </FormControl>
                   <FormHelperText sx={formStyles.helperText}>{touched.roleList && errors.roleList}</FormHelperText>
                 </Grid>
-                {/*Trạng thái*/}
-                {/*<Grid item xs={12}>*/}
-                {/*  <FormControl>*/}
-                {/*    <FormLabel*/}
-                {/*      id="lock-user-label"*/}
-                {/*      style={formStyles.label}*/}
-                {/*      sx={{ color: '#595959', '&.Mui-focused': { color: '#595959' } }}*/}
-                {/*    >*/}
-                {/*      Trạng thái*/}
-                {/*    </FormLabel>*/}
-                {/*    <RadioGroup*/}
-                {/*      row*/}
-                {/*      aria-labelledby="lock-user-label"*/}
-                {/*      name="row-radio-buttons-group"*/}
-                {/*      defaultValue={values.lockFlag}*/}
-                {/*      onChange={(e) => {*/}
-                {/*        setFieldValue('lockFlag', e.target.value);*/}
-                {/*      }}*/}
-                {/*    >*/}
-                {/*      <FormControlLabel value="1" control={<Radio />} label="Lock" />*/}
-                {/*      <FormControlLabel value="0" control={<Radio />} label="Unlock" />*/}
-                {/*    </RadioGroup>*/}
-                {/*  </FormControl>*/}
-                {/*</Grid>*/}
+                {/* Trạng thái*/}
+                {/* <Grid item xs={12}>
+                  <FormControl>
+                    <FormLabel
+                      id="lock-user-label"
+                      style={formStyles.label}
+                      sx={{ color: '#595959', '&.Mui-focused': { color: '#595959' } }}
+                    >
+                      Trạng thái
+                    </FormLabel>
+                    <RadioGroup
+                      row
+                      aria-labelledby="lock-user-label"
+                      name="row-radio-buttons-group"
+                      defaultValue={values.lockFlag}
+                      onChange={(e) => {
+                        setFieldValue('lockFlag', e.target.value);
+                      }}
+                    >
+                      <FormControlLabel value="9" control={<Radio />} label="Lock" />
+                      <FormControlLabel value="0" control={<Radio />} label="Unlock" />
+                    </RadioGroup>
+                  </FormControl>
+                </Grid> */}
               </Grid>
               {!isView && ( // Chỉ hiển thị button khi không phải chế độ xem
                 <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>

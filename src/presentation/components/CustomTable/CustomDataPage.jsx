@@ -23,6 +23,7 @@ const CustomDataPage = ({
   title,
   data = [],
   columns = [],
+  page = '',
   filterComponent,
   searchPlaceholder = 'Tìm kiếm...',
   onSearch,
@@ -144,55 +145,57 @@ const CustomDataPage = ({
           )}
         </Stack>
 
-        <MainCard
-          sx={pageStyles.mainCard}
-          title={
-            <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
-              <Box sx={pageStyles.searchContainer}>
-                {/* search feature */}
-                {enableSearch && (
-                  <TextField
-                    placeholder={searchPlaceholder}
-                    value={searchTerm}
-                    onChange={handleSearch}
-                    variant="outlined"
-                    size="small"
-                    sx={{ width: { xs: '100%', md: '400px' } }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchOutlined style={{ fontSize: '16px' }} />
-                        </InputAdornment>
-                      )
-                    }}
-                  />
-                )}
-              </Box>
-              {/* filter button open/close  */}
-              <div style={pageStyles.actionButtons}>
-                {selectedItems.length > 0 && permissions.delete && (
-                  <Button variant="contained" color="error" onClick={handleDeleteMultiple}>
-                    Xóa {selectedItems.length} mục đã chọn
-                  </Button>
-                )}
-                {filterComponent && (
-                  <Button variant="contained" color="warning" onClick={handleToggleAdvancedFilter}>
-                    <FilterOutlined style={pageStyles.filterIcon} /> Lọc nâng cao
-                  </Button>
-                )}
-              </div>
-            </Stack>
-          }
-        >
-          {/* filter feature  */}
+        {page === 'users' && (
+          <MainCard
+            sx={pageStyles.mainCard}
+            title={
+              <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
+                <Box sx={pageStyles.searchContainer}>
+                  {/* search feature */}
+                  {enableSearch && (
+                    <TextField
+                      placeholder={searchPlaceholder}
+                      value={searchTerm}
+                      onChange={handleSearch}
+                      variant="outlined"
+                      size="small"
+                      sx={{ width: { xs: '100%', md: '400px' } }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchOutlined style={{ fontSize: '16px' }} />
+                          </InputAdornment>
+                        )
+                      }}
+                    />
+                  )}
+                </Box>
+                {/* filter button open/close  */}
+                <div style={pageStyles.actionButtons}>
+                  {selectedItems.length > 0 && permissions.delete && (
+                    <Button variant="contained" color="error" onClick={handleDeleteMultiple}>
+                      Xóa {selectedItems.length} mục đã chọn
+                    </Button>
+                  )}
+                  {filterComponent && (
+                    <Button variant="contained" color="warning" onClick={handleToggleAdvancedFilter}>
+                      <FilterOutlined style={pageStyles.filterIcon} /> Lọc nâng cao
+                    </Button>
+                  )}
+                </div>
+              </Stack>
+            }
+          >
+            {/* filter feature  */}
 
-          {enableFilter && filterComponent ? (
-            <Collapse in={showAdvancedFilter}>
-              <Divider sx={pageStyles.collapseDivider} />
-              {filterComponent}
-            </Collapse>
-          ) : null}
-        </MainCard>
+            {enableFilter && filterComponent ? (
+              <Collapse in={showAdvancedFilter}>
+                <Divider sx={pageStyles.collapseDivider} />
+                {filterComponent}
+              </Collapse>
+            ) : null}
+          </MainCard>
+        )}
         {/* Data table */}
         <CustomDataTable
           data={data}

@@ -20,31 +20,7 @@ const RoleFormAction = ({ item, onClose, onSubmit, title, isView }) => {
   const [role, setRole] = useState(item);
   const isUpdate = !!item;
 
-  console.log(item);
-
-  // get role detail by id
-
-  const fetchRoleDetail = async () => {
-    try {
-      const response = await rolesApi.findRoleById(item.id);
-      setRole(response.data);
-    } catch (err) {
-      console.error('Lỗi khi gọi API:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!item || !isView) {
-      return;
-    }
-
-    fetchRoleDetail();
-  }, [item, isView]);
-
   // form handler
-
   const handleSubmit = (data) => {
     onSubmit(data);
     onClose();
@@ -52,16 +28,16 @@ const RoleFormAction = ({ item, onClose, onSubmit, title, isView }) => {
 
   const initialValues = {
     id: role?.id || 0,
-    roleCode: role?.roleCode || '',
-    roleName: role?.roleName || '',
-    roleDesc: role?.roleDesc || ''
+    code: role?.code || '',
+    name: role?.name || '',
+    description: role?.description || ''
   };
 
   const validationSchema = !isView
     ? Yup.object().shape({
-        roleCode: Yup.string().max(255, 'Mã chức vụ không được vượt quá 255 ký tự').required('Mã chức vụ là bắt buộc'),
-        roleName: Yup.string().max(255, 'Tên chức vụ không được vượt quá 255 ký tự').required('Tên chức vụ là bắt buộc'),
-        roleDesc: Yup.string().max(255, 'Quyền hạn không được vượt quá 255 ký tự').required('Quyền hạn là bắt buộc')
+        code: Yup.string().max(255, 'Mã chức vụ không được vượt quá 255 ký tự').required('Mã chức vụ là bắt buộc'),
+        name: Yup.string().max(255, 'Tên chức vụ không được vượt quá 255 ký tự').required('Tên chức vụ là bắt buộc'),
+        description: Yup.string().max(255, 'Quyền hạn không được vượt quá 255 ký tự').required('Quyền hạn là bắt buộc')
       })
     : null;
 
@@ -75,40 +51,40 @@ const RoleFormAction = ({ item, onClose, onSubmit, title, isView }) => {
                 <TextField
                   fullWidth
                   label="Mã chức vụ"
-                  name="roleCode"
-                  value={values.roleCode}
+                  name="code"
+                  value={values.code}
                   onChange={handleChange}
-                  error={Boolean(touched.roleCode && errors.roleCode)}
+                  error={Boolean(touched.code && errors.code)}
                   InputLabelProps={{ style: formStyles.label }}
                   inputProps={{ style: isView ? formViewStyles.inputReadOnly : formStyles.input, readOnly: isView }}
                 />
-                <FormHelperText sx={formStyles.helperText}>{touched.roleCode && errors.roleCode}</FormHelperText>
+                <FormHelperText sx={formStyles.helperText}>{touched.code && errors.code}</FormHelperText>
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
                   label="Tên chức vụ"
-                  name="roleName"
-                  value={values.roleName}
+                  name="name"
+                  value={values.name}
                   onChange={handleChange}
-                  error={Boolean(touched.roleName && errors.roleName)}
+                  error={Boolean(touched.name && errors.name)}
                   InputLabelProps={{ style: formStyles.label }}
                   inputProps={{ style: isView ? formViewStyles.inputReadOnly : formStyles.input, readOnly: isView }}
                 />
-                <FormHelperText sx={formStyles.helperText}>{touched.roleName && errors.roleName}</FormHelperText>
+                <FormHelperText sx={formStyles.helperText}>{touched.name && errors.name}</FormHelperText>
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
                   label="Quyền hạn"
-                  name="roleDesc"
-                  value={values.roleDesc}
+                  name="description"
+                  value={values.description}
                   onChange={handleChange}
-                  error={Boolean(touched.roleDesc && errors.roleDesc)}
+                  error={Boolean(touched.description && errors.description)}
                   InputLabelProps={{ style: formStyles.label }}
                   inputProps={{ style: isView ? formViewStyles.inputReadOnly : formStyles.input, readOnly: isView }}
                 />
-                <FormHelperText sx={formStyles.helperText}>{touched.roleDesc && errors.roleDesc}</FormHelperText>
+                <FormHelperText sx={formStyles.helperText}>{touched.description && errors.description}</FormHelperText>
               </Grid>
             </Grid>
             {!isView && ( // Chỉ hiển thị button khi không phải chế độ xem

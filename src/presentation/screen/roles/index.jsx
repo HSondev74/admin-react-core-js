@@ -25,29 +25,29 @@ const RoleManagementPage = () => {
   // Columns definition
   const columns = [
     {
-      id: 'roleCode',
+      id: 'code',
       label: 'Mã chức vụ',
       minWidth: 150,
       sortable: true
     },
     {
-      id: 'roleName',
+      id: 'name',
       label: 'Tên chức vụ',
       minWidth: 150,
       sortable: true
     },
     {
-      id: 'roleDesc',
+      id: 'description',
       label: 'Quyền hạn',
       minWidth: 150,
       sortable: true
     },
-    {
-      id: 'updateBy',
-      label: 'Cập nhật bởi',
-      minWidth: 150,
-      sortable: true
-    },
+    // {
+    //   id: 'updateBy',
+    //   label: 'Cập nhật bởi',
+    //   minWidth: 150,
+    //   sortable: true
+    // },
     {
       id: 'createTime',
       label: 'Thời gian tạo',
@@ -68,8 +68,8 @@ const RoleManagementPage = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await rolesApi.getListRole();
-      setData(response.data);
+      const response = await rolesApi.getAllRoles();
+      setData(response.data.data);
     } catch (err) {
       console.log('Lỗi khi gọi API:', err);
     } finally {
@@ -82,18 +82,13 @@ const RoleManagementPage = () => {
   }, []);
 
   // Handlers
-
   const handleCreate = useCallback(
     async (newData) => {
       try {
-        var response = await rolesApi.createRole(newData);
+        await rolesApi.createRole(newData);
 
-        if (!isSuccessCode(response.code)) {
-          showNotification(response.msg, 'error');
-        } else {
-          showNotification('Thêm chức vụ thành công', 'success');
-          await fetchData();
-        }
+        showNotification('Thêm chức vụ thành công', 'success');
+        await fetchData();
       } catch (error) {
         console.error('Có lỗi khi tạo chức vụ:', error);
         showNotification('Có lỗi xảy ra!', 'error');
@@ -105,14 +100,10 @@ const RoleManagementPage = () => {
   const handleEdit = useCallback(
     async (editedData) => {
       try {
-        var response = await rolesApi.updateRole(editedData.id, editedData);
+        await rolesApi.updateRole(editedData.id, editedData);
 
-        if (!isSuccessCode(response.code)) {
-          showNotification(response.msg, 'error');
-        } else {
-          showNotification('Sửa chức vụ thành công', 'success');
-          await fetchData();
-        }
+        showNotification('Sửa chức vụ thành công', 'success');
+        await fetchData();
       } catch (error) {
         console.error('Có lỗi khi cập chức vụ:', error);
         showNotification('Có lỗi xảy ra!', 'error');
@@ -125,14 +116,10 @@ const RoleManagementPage = () => {
     async (itemToDelete) => {
       console.log(itemToDelete);
       try {
-        var response = await rolesApi.deleteRoles(itemToDelete);
+        await rolesApi.deleteRoles(itemToDelete);
 
-        if (!isSuccessCode(response.code)) {
-          showNotification(response.msg, 'error');
-        } else {
-          showNotification('Xóa chức vụ thành công', 'success');
-          await fetchData();
-        }
+        showNotification('Xóa chức vụ thành công', 'success');
+        await fetchData();
       } catch (error) {
         console.error('Có lỗi khi xóa chức vụ:', error);
         showNotification('Có lỗi xảy ra!', 'error');
@@ -147,6 +134,7 @@ const RoleManagementPage = () => {
       title="Quản lý chức vụ"
       data={data}
       columns={columns}
+      page="roles"
       onCreate={handleCreate}
       onEdit={handleEdit}
       onDelete={handleDelete}

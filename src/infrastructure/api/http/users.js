@@ -1,3 +1,4 @@
+import axiosInstance from '../../../app/config/axiosInstance';
 import BaseApi from './BaseApi';
 
 /**
@@ -18,7 +19,20 @@ class UsersApi extends BaseApi {
    */
   async register(userData) {
     try {
-      return await this.post('/register', userData);
+      return await this.post('', userData);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Xóa người dùng theo ID
+   * @param {string} userId - ID người dùng cần xóa
+   * @returns {Promise<Object>} - Kết quả trả về
+   */
+  async deleteUser(userId) {
+    try {
+      return await this.delete(`/${userId}`);
     } catch (error) {
       throw error;
     }
@@ -31,20 +45,7 @@ class UsersApi extends BaseApi {
    */
   async deleteUsers(userIds) {
     try {
-      return await this.delete('', userIds);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Tìm người dùng theo tên đăng nhập
-   * @param {string} username - Tên đăng nhập cần tìm
-   * @returns {Promise<Object>} - Dữ liệu người dùng
-   */
-  async findUserByUsername(username) {
-    try {
-      return await this.get(`/${username}`);
+      return await this.delete('', { ids: userIds });
     } catch (error) {
       throw error;
     }
@@ -60,28 +61,34 @@ class UsersApi extends BaseApi {
    * @param {string} dateTo - Ngày kết thúc (tùy chọn)
    * @returns {Promise<Object>} - Dữ liệu người dùng
    */
-  async getListUser(params) {
+  async getListUser(body) {
     try {
-      const { page, size, role, status, dateFrom, dateTo, searchTerm } = params;
+      const { page, size, sortBy, searchTerm, sortDirection } = body;
 
       const paramMap = {
         page: 'page',
         size: 'size',
-        role: 'role',
-        status: 'status',
-        dateFrom: 'startTime',
-        dateTo: 'endTime'
+        sortBy: 'sortBy',
+        sortDirection: 'sortDirection'
+      };
+
+      // Tạo object chứa các params cần thiết từ body
+      const paramsObject = {
+        page,
+        size,
+        sortBy,
+        sortDirection
       };
 
       const mappedParams = Object.fromEntries(
-        Object.entries({ page, size, role, status, dateFrom, dateTo })
+        Object.entries(paramsObject)
           .filter(([key, value]) => value !== '' && value != null && value !== undefined && paramMap[key])
           .map(([key, value]) => [paramMap[key], value])
       );
 
       // Xử lý searchTerm
       if (searchTerm && typeof searchTerm === 'string') {
-        const isPhone = /^\d{8,15}$/.test(searchTerm.trim()); // ví dụ: chuỗi số từ 8–15 chữ số
+        const isPhone = /^\d{8,15}$/.test(searchTerm.trim());
         if (isPhone) {
           mappedParams['phone'] = searchTerm.trim();
         } else {
@@ -89,9 +96,7 @@ class UsersApi extends BaseApi {
         }
       }
 
-      const queryString = new URLSearchParams(mappedParams).toString();
-
-      return await this.post(`/search?${queryString}`);
+      return await this.post(`/search`, mappedParams);
     } catch (error) {
       throw error;
     }
@@ -99,12 +104,12 @@ class UsersApi extends BaseApi {
 
   /**
    * Tìm người dùng theo ID
-   * @param {number} id - ID người dùng
+   * @param {string} id - ID người dùng
    * @returns {Promise<Object>} - Dữ liệu người dùng
    */
   async findUserById(id) {
     try {
-      return await this.get(`/user-detail/${id}`);
+      return await this.get(`/${id}`); // GET /api/users/{id}
     } catch (error) {
       throw error;
     }
@@ -138,20 +143,6 @@ class UsersApi extends BaseApi {
   }
 
   /**
-   * Cập nhật thông tin người dùng
-   * @param {number} id - ID người dùng
-   * @param {Object} userData - Dữ liệu người dùng cập nhật
-   * @returns {Promise<Object>} - Dữ liệu người dùng đã cập nhật
-   */
-  async updateUserInfo(id, userData) {
-    try {
-      return await this.put(`/user-info/${id}`, userData);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
    * Cập nhật người dùng
    * @param {number} id - ID người dùng
    * @param {Object} userData - Dữ liệu người dùng cập nhật
@@ -159,7 +150,7 @@ class UsersApi extends BaseApi {
    */
   async updateUser(id, userData) {
     try {
-      return await this.put(`/update/${id}`, userData);
+      return await this.put(`/${id}`, userData);
     } catch (error) {
       throw error;
     }
@@ -170,9 +161,9 @@ class UsersApi extends BaseApi {
    * @param {string} username - Tên đăng nhập cần mở khóa
    * @returns {Promise<Object>} - Kết quả trả về
    */
-  async unlockUser(username) {
+  async unlockUser(userData) {
     try {
-      return await this.put(`/unlock/${username}`, {});
+      return await this.post('/unlock', userData);
     } catch (error) {
       throw error;
     }
@@ -180,12 +171,12 @@ class UsersApi extends BaseApi {
 
   /**
    * Khóa người dùng theo tên đăng nhập
-   * @param {string} username - Tên đăng nhập cần khóa
+   * @param {string} userData - Dữ liệu người dùng cần khóa
    * @returns {Promise<Object>} - Kết quả trả về
    */
-  async lockUser(username) {
+  async lockUser(userData) {
     try {
-      return await this.put(`/lock/${username}`, {});
+      return await this.post('/lock', userData);
     } catch (error) {
       throw error;
     }
@@ -199,6 +190,19 @@ class UsersApi extends BaseApi {
   async changePassword(passwordData) {
     try {
       return await this.put('/change-password', passwordData);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * User reset password by email
+   * @param {Object} resetData - Dữ liệu reset mật khẩu
+   * @returns {Promise<Object>} - Kết quả trả về
+   */
+  async resetPasswordUser(resetData) {
+    try {
+      return await this.post('/reset-password-user', resetData);
     } catch (error) {
       throw error;
     }

@@ -44,7 +44,7 @@ const pages = {
               parentId: '2',
               path: '/abc',
               menuId: '4',
-              title: 'Quản lý nhân viên abc',
+              title: 'Quản lý nhân viên',
               icon: 'faUser1',
               roleName: 'hrm_user_abc'
             }
