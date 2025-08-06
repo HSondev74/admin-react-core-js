@@ -92,14 +92,10 @@ const UserFormAction = ({ item, onClose, onSubmit, title, isView, roleList }) =>
   };
 
   const handleSubmit = (data) => {
-    console.log('dataSubmit: ', data);
-
     let dataToSubmit;
 
     if (isUpdate) {
       dataToSubmit = getChangedField(originalData, data);
-      console.log('Original data:', originalData);
-      console.log('Changed fields only:', dataToSubmit);
 
       const hasChanges = Object.keys(dataToSubmit).length > 1;
       if (!hasChanges) {
@@ -123,8 +119,6 @@ const UserFormAction = ({ item, onClose, onSubmit, title, isView, roleList }) =>
     lockFlag: user?.lockFlag || '0',
     ...user
   };
-
-  console.log(initialValues);
 
   const validationSchema = !isView ? validateForm(isUpdate) : null;
 

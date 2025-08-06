@@ -27,7 +27,6 @@ const RoleFormAction = ({ item, onClose, onSubmit, title, isView }) => {
   };
 
   const initialValues = {
-    id: role?.id || 0,
     code: role?.code || '',
     name: role?.name || '',
     description: role?.description || ''

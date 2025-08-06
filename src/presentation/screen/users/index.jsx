@@ -48,8 +48,6 @@ const UserManagementPage = () => {
         response = await usersApi.lockUser(payload);
       }
 
-      console.log('resToggle: ', response);
-
       // Refresh data sau khi update thành công
       await fetchData({
         page: pagination.page,
@@ -158,9 +156,6 @@ const UserManagementPage = () => {
 
   useEffect(() => {
     fetchRoleList();
-  }, []);
-
-  useEffect(() => {
     fetchData({ page: pagination.page, size: pagination.rowsPerPage });
   }, []);
 
@@ -274,7 +269,6 @@ const UserManagementPage = () => {
     async (editedData) => {
       try {
         let response = await usersApi.updateUser(editedData.id, editedData);
-        console.log('response: ', response);
 
         showNotification('Sửa nhân viên thành công', 'success');
         await fetchData({
