@@ -32,6 +32,7 @@ import NavSubMenu from './NavSubMenu';
 export default function NavItem({ item, level, isParents = false, setSelectedID }) {
   const { menuMaster } = useGetMenuMaster();
   const drawerOpen = menuMaster.isDashboardDrawerOpened;
+  console.log('item navitem', item);
 
   const downLG = useMediaQuery((theme) => theme.breakpoints.down('lg'));
 

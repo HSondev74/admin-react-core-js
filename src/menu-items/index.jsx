@@ -1,13 +1,32 @@
-// project import
-import dashboard from './dashboard';
-import pages from './page';
-import utilities from './utilities';
-import support from './support';
+import { useGetMenuTree } from '../infrastructure/api/http/menu';
 
-// ==============================|| MENU ITEMS ||============================== //
+export const useMenuItems = () => {
+  const { menuItems, menuLoading, menuError } = useGetMenuTree();
 
+  console.log('useMenuItems:', { menuItems, menuLoading, menuError });
+
+  if (menuLoading) {
+    return { items: [] };
+  }
+
+  const result = {
+    items: [
+      {
+        id: 'group-navigation',
+        title: 'Navigation',
+        type: 'group',
+        children: menuItems
+      }
+    ]
+  };
+
+  console.log('Final menu result:', result);
+  return result;
+};
+
+// Fallback static export for non-hook usage
 const menuItems = {
-  items: [dashboard, pages, utilities, support]
+  items: []
 };
 
 export default menuItems;
