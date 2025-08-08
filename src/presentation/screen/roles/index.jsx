@@ -16,7 +16,6 @@ import { useNotification } from '../../../contexts/NotificationContext';
 const RoleManagementPage = () => {
   // State
   const [loading, setLoading] = useState(true);
-
   const [data, setData] = useState([]);
 
   //notification
@@ -82,6 +81,21 @@ const RoleManagementPage = () => {
   }, []);
 
   // Handlers
+  const handleAssignRoleToUsers = useCallback(
+    async (reqBody) => {
+      try {
+        await rolesApi.assignRoleToUsers(reqBody);
+
+        showNotification('Gán chức vụ thành công', 'success');
+        await fetchData();
+      } catch (error) {
+        console.error('Có lỗi khi gán chức vụ:', error);
+        showNotification('Có lỗi xảy ra!', 'error');
+      }
+    },
+    [fetchData, showNotification, isSuccessCode]
+  );
+
   const handleCreate = useCallback(
     async (newData) => {
       try {
@@ -100,7 +114,7 @@ const RoleManagementPage = () => {
   const handleEdit = useCallback(
     async (editedData) => {
       try {
-        await rolesApi.updateRole(editedData.id, editedData);
+        await rolesApi.updateRole(editedData);
 
         showNotification('Sửa chức vụ thành công', 'success');
         await fetchData();
@@ -114,9 +128,8 @@ const RoleManagementPage = () => {
 
   const handleDelete = useCallback(
     async (itemToDelete) => {
-      console.log(itemToDelete);
       try {
-        await rolesApi.deleteRoles(itemToDelete);
+        await rolesApi.deleteRoles({ roleIds: itemToDelete });
 
         showNotification('Xóa chức vụ thành công', 'success');
         await fetchData();
@@ -135,15 +148,23 @@ const RoleManagementPage = () => {
       data={data}
       columns={columns}
       page="roles"
+      onAssignRoleToUsers={handleAssignRoleToUsers}
       onCreate={handleCreate}
       onEdit={handleEdit}
       onDelete={handleDelete}
-      permissions={{ create: true, edit: true, view: true, delete: true }}
+      permissions={{ assignRole: true, create: true, edit: true, view: true, delete: true }}
       showCheckbox={true}
       actionType="icon-text"
-      createComponent={(props) => <RoleFormAction {...props} title="Thêm chức vụ mới" isView={false} onSubmit={handleCreate} />}
-      editComponent={(props) => <RoleFormAction {...props} title="Chỉnh sửa chức vụ" isView={false} onSubmit={handleEdit} />}
-      viewComponent={(props) => <RoleFormAction {...props} title="Xem chi tiết chức vụ" isView={true} />}
+      assignRoleComponent={(props) => (
+        <RoleFormAction {...props} isAssignRole={true} title="Gán quyền cho nhân viên" isView={false} onSubmit={handleAssignRoleToUsers} />
+      )}
+      createComponent={(props) => (
+        <RoleFormAction {...props} title="Thêm chức vụ mới" isAssignRole={false} isView={false} onSubmit={handleCreate} />
+      )}
+      editComponent={(props) => (
+        <RoleFormAction {...props} title="Chỉnh sửa chức vụ" isAssignRole={false} isView={false} onSubmit={handleEdit} />
+      )}
+      viewComponent={(props) => <RoleFormAction {...props} title="Xem chi tiết chức vụ" isAssignRole={false} isView={true} />}
       collapsible={false}
       loading={loading}
       enableSearch={false}

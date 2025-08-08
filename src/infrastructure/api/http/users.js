@@ -61,9 +61,9 @@ class UsersApi extends BaseApi {
    * @param {string} dateTo - Ngày kết thúc (tùy chọn)
    * @returns {Promise<Object>} - Dữ liệu người dùng
    */
-  async getListUser(body) {
+  async getListUser(body = {}) {
     try {
-      const { page, size, sortBy, searchTerm, sortDirection } = body;
+      const { page, size, sortBy, searchTerm, sortDirection, roleIds } = body;
 
       const paramMap = {
         page: 'page',
@@ -88,12 +88,12 @@ class UsersApi extends BaseApi {
 
       // Xử lý searchTerm
       if (searchTerm && typeof searchTerm === 'string') {
-        const isPhone = /^\d{8,15}$/.test(searchTerm.trim());
-        if (isPhone) {
-          mappedParams['phone'] = searchTerm.trim();
-        } else {
-          mappedParams['username'] = searchTerm.trim();
-        }
+        mappedParams['username'] = searchTerm.trim();
+      }
+
+      // Xử lý roleIds
+      if (Array.isArray(roleIds) && roleIds.length > 0) {
+        mappedParams['roleIds'] = roleIds;
       }
 
       return await this.post(`/search`, mappedParams);

@@ -31,6 +31,7 @@ const UserFormAction = ({ item, onClose, onSubmit, title, isView, roleList }) =>
   const [user, setUser] = useState(item);
   const isUpdate = !!item;
   const [originalData, setOriginalData] = useState({});
+  const [loading, setLoading] = useState(false);
 
   // Xử lý submit những field có thay đổi khi isUpdate
   const getChangedField = (original, current) => {
@@ -71,6 +72,7 @@ const UserFormAction = ({ item, onClose, onSubmit, title, isView, roleList }) =>
     if (!item || !item.id) {
       return;
     }
+    setLoading(true);
     try {
       const response = await usersApi.findUserById(item.id);
       const userData = { ...response.data.data, roleIds: response.data.data.roles.map((role) => role.id) };
@@ -79,6 +81,7 @@ const UserFormAction = ({ item, onClose, onSubmit, title, isView, roleList }) =>
     } catch (err) {
       console.error('Lỗi khi gọi API:', err);
     } finally {
+      setLoading(false);
     }
   };
 
@@ -230,6 +233,7 @@ const UserFormAction = ({ item, onClose, onSubmit, title, isView, roleList }) =>
                       multiple
                       options={roleList}
                       disableCloseOnSelect
+                      loading={loading}
                       getOptionLabel={(option) => option.name || ''}
                       // renderTags={() => null} // Không hiển thị tag
                       value={Array.isArray(values.roleIds) ? roleList.filter((role) => values.roleIds.includes(role.id)) : []}
@@ -262,35 +266,12 @@ const UserFormAction = ({ item, onClose, onSubmit, title, isView, roleList }) =>
                           }}
                         />
                       )}
-                      disabled={isView}
+                      disabled={isView || loading}
+                      noOptionsText={loading ? 'Đang tải...' : 'Không có quyền khả dụng'}
                     />
                   </FormControl>
                   <FormHelperText sx={formStyles.helperText}>{touched.roleList && errors.roleList}</FormHelperText>
                 </Grid>
-                {/* Trạng thái*/}
-                {/* <Grid item xs={12}>
-                  <FormControl>
-                    <FormLabel
-                      id="lock-user-label"
-                      style={formStyles.label}
-                      sx={{ color: '#595959', '&.Mui-focused': { color: '#595959' } }}
-                    >
-                      Trạng thái
-                    </FormLabel>
-                    <RadioGroup
-                      row
-                      aria-labelledby="lock-user-label"
-                      name="row-radio-buttons-group"
-                      defaultValue={values.lockFlag}
-                      onChange={(e) => {
-                        setFieldValue('lockFlag', e.target.value);
-                      }}
-                    >
-                      <FormControlLabel value="9" control={<Radio />} label="Lock" />
-                      <FormControlLabel value="0" control={<Radio />} label="Unlock" />
-                    </RadioGroup>
-                  </FormControl>
-                </Grid> */}
               </Grid>
               {!isView && ( // Chỉ hiển thị button khi không phải chế độ xem
                 <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>

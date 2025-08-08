@@ -67,9 +67,9 @@ class RolesApi extends BaseApi {
    * @param {number} id - ID của vai trò cần xóa
    * @returns {Promise<Object>} - Kết quả trả về
    */
-  async deleteRole(id) {
+  async deleteRoles(itemToDelete) {
     try {
-      return await this.delete(`/${id}`);
+      return await this.delete('', itemToDelete);
     } catch (error) {
       throw error;
     }
@@ -135,6 +135,19 @@ class RolesApi extends BaseApi {
   async assignMenus(menuData) {
     try {
       return await this.post('/assign-menus', menuData);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Gán role cho nhiều users
+   * @param {Object} reqBody - Dữ liệu gán role
+   * @returns {Promise<Object>} - Kết quả trả về
+   */
+  async assignRoleToUsers(reqBody) {
+    try {
+      return await this.post('/assign-role-to-users', reqBody);
     } catch (error) {
       throw error;
     }

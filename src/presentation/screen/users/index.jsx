@@ -320,7 +320,7 @@ const UserManagementPage = () => {
       onCreate={handleCreate}
       onEdit={handleEdit}
       onDelete={handleDelete}
-      permissions={{ create: true, edit: true, view: true, delete: true }}
+      permissions={{ assignRole: false, create: true, edit: true, view: true, delete: true }}
       showCheckbox={true}
       actionType="icon-text"
       createComponent={(props) => (

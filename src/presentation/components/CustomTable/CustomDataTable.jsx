@@ -18,7 +18,15 @@ import Collapse from '@mui/material/Collapse';
 import Typography from '@mui/material/Typography';
 import { Menu, MenuItem } from '@mui/material';
 //antd icon
-import { ArrowDownOutlined, ArrowRightOutlined, DeleteOutlined, EditOutlined, EyeOutlined, MoreOutlined } from '@ant-design/icons';
+import {
+  ArrowDownOutlined,
+  ArrowRightOutlined,
+  CompassOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
+  MoreOutlined
+} from '@ant-design/icons';
 // style
 import { tableStyles } from '../../assets/styles/tableStyles';
 
@@ -31,13 +39,14 @@ const CustomDataTable = ({
   loading = false,
   showCheckbox = true,
   actionType = 'icon-text', // 'icon', 'text', 'icon-text'
-  permissions = { edit: true, view: true, delete: true },
+  permissions = { assignRole: true, edit: true, view: true, delete: true },
   collapsible = false,
   renderCollapse,
   pagination = { page: 0, rowsPerPage: 10, totalItems: 0 },
   onChangePage,
   onChangeRowsPerPage,
   onSelectionChange,
+  onAssignRoleToUsers,
   onEdit,
   onView,
   onDelete,
@@ -148,6 +157,15 @@ const CustomDataTable = ({
     [onChangeRowsPerPage, enablePagination]
   );
 
+  const handleAssignRole = useCallback(
+    (item) => {
+      if (onAssignRoleToUsers) {
+        onAssignRoleToUsers(item);
+      }
+    },
+    [onAssignRoleToUsers]
+  );
+
   // Chỉ chuyển sự kiện edit lên component cha
   const handleEdit = useCallback(
     (item) => {
@@ -210,6 +228,17 @@ const CustomDataTable = ({
             'aria-labelledby': 'basic-button'
           }}
         >
+          {permissions.assignRole && (
+            <MenuItem
+              onClick={() => {
+                handleAssignRole(selectedItem);
+                handleCloseMenu();
+              }}
+              sx={{ color: 'darkcyan' }}
+            >
+              <CompassOutlined style={tableStyles.menuItemIcon} /> Gán quyền
+            </MenuItem>
+          )}
           {permissions.view && (
             <MenuItem
               onClick={() => {
@@ -443,6 +472,7 @@ CustomDataTable.propTypes = {
   onChangePage: PropTypes.func,
   onChangeRowsPerPage: PropTypes.func,
   onSelectionChange: PropTypes.func,
+  onAssignRoleToUsers: PropTypes.func,
   onEdit: PropTypes.func,
   onView: PropTypes.func,
   onDelete: PropTypes.func,
