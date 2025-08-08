@@ -15,10 +15,10 @@ const endpoints = {
 
 const transformMenuData = (apiData) => {
   if (!apiData?.data) return [];
-  
+
   return apiData.data
     .sort((a, b) => a.item.sortOrder - b.item.sortOrder)
-    .map(menuItem => ({
+    .map((menuItem) => ({
       id: menuItem.item.id,
       title: menuItem.item.name,
       type: 'item',
@@ -48,31 +48,24 @@ export function useGetMenuMaster() {
 }
 
 export function useGetMenuTree() {
-  const { data, isLoading, error } = useSWR(
-    endpoints.key + endpoints.tree, 
-    () => menuApi.getMenuTree(),
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      onError: (err) => console.error('SWR Error:', err),
-      onSuccess: (data) => console.log('SWR Success:', data)
-    }
-  );
+  const { data, isLoading, error } = useSWR(endpoints.key + endpoints.tree, () => menuApi.getMenuTree(), {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    onError: (err) => console.error('SWR Error:', err),
+    onSuccess: (data) => console.log('SWR Success:', data)
+  });
 
   console.log('Menu API Response:', { data, isLoading, error });
 
-  const memoizedValue = useMemo(
-    () => {
-      const transformedData = data ? transformMenuData(data) : [];
-      console.log('Transformed Menu Data:', transformedData);
-      return {
-        menuItems: transformedData,
-        menuLoading: isLoading,
-        menuError: error
-      };
-    },
-    [data, isLoading, error]
-  );
+  const memoizedValue = useMemo(() => {
+    const transformedData = data ? transformMenuData(data) : [];
+    console.log('Transformed Menu Data:', transformedData);
+    return {
+      menuItems: transformedData,
+      menuLoading: isLoading,
+      menuError: error
+    };
+  }, [data, isLoading, error]);
 
   return memoizedValue;
 }

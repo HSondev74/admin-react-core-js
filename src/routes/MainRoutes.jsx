@@ -3,6 +3,7 @@ import { lazy } from 'react';
 // project imports
 import Loadable from '../presentation/components/Loadable';
 import DashboardLayout from '../presentation/components/layout/Dashboard';
+import MenuManagement from '../presentation/screen/component-overview/menu';
 
 // render- Dashboard
 const DashboardDefault = Loadable(lazy(() => import('../presentation/screen/dashboard/default')));
@@ -31,6 +32,7 @@ const MainRoutes = {
     },
     {
       path: 'dashboard',
+      element: <DashboardDefault />,
       children: [
         {
           path: 'default',
@@ -55,12 +57,20 @@ const MainRoutes = {
       element: <SamplePage />
     },
     {
-      path: 'user-mangement',
+      path: 'users',
       element: <UserManagementPage />
     },
     {
-      path: 'role-mangement',
+      path: 'roles',
       element: <RoleManagementPage />
+    },
+    {
+      path: 'settings',
+      element: <MenuManagement /> // Placeholder for settings page
+    },
+    {
+      path: 'setup-menu',
+      element: <SamplePage /> // Placeholder for setup menu page
     }
   ]
 };

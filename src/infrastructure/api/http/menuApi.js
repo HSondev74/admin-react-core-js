@@ -6,10 +6,8 @@ class MenuApi extends BaseApi {
   }
 
   async getMenuTree() {
-    console.log('Calling menu API...');
     try {
-      const response = await this.get('/tree/all');
-      console.log('Menu API response:', response);
+      const response = await this.get('/me/tree');
       return response.data;
     } catch (error) {
       console.error('Menu API error:', error);
