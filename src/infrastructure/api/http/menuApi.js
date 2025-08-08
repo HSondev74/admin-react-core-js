@@ -14,6 +14,15 @@ class MenuApi extends BaseApi {
       throw error;
     }
   }
+
+  async addNewMenuItem() {
+    try {
+      await this.post('/me/tree');
+    } catch (error) {
+      console.error('Menu API error:', error);
+      throw error;
+    }
+  }
 }
 
 const menuApi = new MenuApi();
