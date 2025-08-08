@@ -15,9 +15,37 @@ class RolesApi extends BaseApi {
    * Lấy danh sách tất cả các vai trò
    * @returns {Promise<Object>} - Danh sách vai trò
    */
-  async getAllRoles() {
+  async getAllRoles(body = {}) {
     try {
-      return await this.get('');
+      const { page, size, sortBy, searchTerm, sortDirection, roleIds } = body;
+
+      const paramMap = {
+        page: 'page',
+        size: 'size',
+        sortBy: 'sortBy',
+        sortDirection: 'sortDirection'
+      };
+
+      // Tạo object chứa các params cần thiết từ body
+      const paramsObject = {
+        page,
+        size,
+        sortBy,
+        sortDirection
+      };
+
+      const mappedParams = Object.fromEntries(
+        Object.entries(paramsObject)
+          .filter(([key, value]) => value !== '' && value != null && value !== undefined && paramMap[key])
+          .map(([key, value]) => [paramMap[key], value])
+      );
+
+      // Xử lý searchTerm
+      if (searchTerm && typeof searchTerm === 'string') {
+        mappedParams['name'] = searchTerm.trim();
+      }
+
+      return await this.post(`/search`, mappedParams);
     } catch (error) {
       throw error;
     }

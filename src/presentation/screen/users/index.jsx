@@ -22,9 +22,9 @@ const UserManagementPage = () => {
   const [loading, setLoading] = useState(true);
 
   const [data, setData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
+  // const [filteredData, setFilteredData] = useState([]);
   const [pagination, setPagination] = useState({
-    page: 0,
+    page: 1,
     rowsPerPage: 10,
     totalItems: 0
   });
@@ -133,7 +133,7 @@ const UserManagementPage = () => {
         const response = await usersApi.getListUser(params);
         const resData = response?.data?.data;
         setData(resData.content);
-        setFilteredData(resData.content);
+        // setFilteredData(resData.content);
         setPagination({ page: resData?.pageNumber, rowsPerPage: resData?.pageSize, totalItems: resData?.totalElements });
       } catch (err) {
         console.log('Lỗi khi gọi API:', err);
@@ -181,7 +181,7 @@ const UserManagementPage = () => {
       setLoading(true);
 
       const reqBody = {
-        page: 0,
+        page: 1,
         size: pagination.rowsPerPage
       };
 
@@ -189,10 +189,10 @@ const UserManagementPage = () => {
       if (newFilters?.sortBy) reqBody.sortBy = newFilters.sortBy;
       if (newFilters?.sortDirection) reqBody.sortDirection = newFilters.sortDirection;
 
-      setPagination((prev) => ({ ...prev, page: 0 }));
+      setPagination((prev) => ({ ...prev, page: 1 }));
       fetchData(reqBody);
 
-      setLoading(false, pagination.rowsPerPage);
+      setLoading(false);
     },
     [data]
   );
@@ -311,7 +311,7 @@ const UserManagementPage = () => {
   return (
     <CustomDataPage
       title="Quản Lý Nhân Viên"
-      data={filteredData}
+      data={data}
       columns={columns}
       page="users"
       filterComponent={<UserAdvancedFilter onFilter={handleFilter} />}

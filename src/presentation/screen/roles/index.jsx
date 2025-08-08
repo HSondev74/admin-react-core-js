@@ -17,6 +17,12 @@ const RoleManagementPage = () => {
   // State
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [pagination, setPagination] = useState({
+    page: 1,
+    rowsPerPage: 10,
+    totalItems: 0
+  });
 
   //notification
   const { showNotification, hideNotification } = useNotification();
@@ -64,11 +70,11 @@ const RoleManagementPage = () => {
   //check response code
   const isSuccessCode = (code) => code >= 200 && code < 300;
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (params) => {
     setLoading(true);
     try {
-      const response = await rolesApi.getAllRoles();
-      setData(response.data.data);
+      const response = await rolesApi.getAllRoles(params);
+      setData(response.data.data.content);
     } catch (err) {
       console.log('Lỗi khi gọi API:', err);
     } finally {
@@ -78,6 +84,27 @@ const RoleManagementPage = () => {
 
   useEffect(() => {
     fetchData();
+  }, []);
+
+  const applyFilters = useCallback(
+    async (searchTerm) => {
+      setLoading(true);
+      const reqBody = {
+        page: 1,
+        size: pagination.rowsPerPage
+      };
+
+      if (searchTerm) reqBody.searchTerm = searchTerm;
+      setPagination((prev) => ({ ...prev, page: 1 }));
+      await fetchData(reqBody);
+      setLoading(false);
+    },
+    [data]
+  );
+
+  const handleSearch = useCallback((term) => {
+    setSearchTerm(term);
+    applyFilters(term);
   }, []);
 
   // Handlers
@@ -148,6 +175,7 @@ const RoleManagementPage = () => {
       data={data}
       columns={columns}
       page="roles"
+      onSearch={handleSearch}
       onAssignRoleToUsers={handleAssignRoleToUsers}
       onCreate={handleCreate}
       onEdit={handleEdit}
@@ -167,9 +195,10 @@ const RoleManagementPage = () => {
       viewComponent={(props) => <RoleFormAction {...props} title="Xem chi tiết chức vụ" isAssignRole={false} isView={true} />}
       collapsible={false}
       loading={loading}
-      enableSearch={false}
+      searchPlaceholder="Tìm kiếm theo mã chức vụ, tên chức vụ,..."
+      enableSearch={true}
       enableFilter={false}
-      enablePagination={false}
+      enablePagination={true}
     />
   );
 };
