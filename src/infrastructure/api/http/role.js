@@ -1,19 +1,44 @@
 import BaseApi from './BaseApi';
 
 /**
- * Class quản lý các API liên quan đến người dùng
+ * Class quản lý các API liên quan đến vai trò (roles)
  */
 class RolesApi extends BaseApi {
   /**
    * Constructor
    */
   constructor() {
-    super('/system/role');
+    super('/roles');
   }
 
   /**
-   * Thêm chức vụ mới
-   * @param {Object} roleData - Dữ liệu chức vụ
+   * Lấy danh sách tất cả các vai trò
+   * @returns {Promise<Object>} - Danh sách vai trò
+   */
+  async getAllRoles() {
+    try {
+      return await this.get('');
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Lấy thông tin chi tiết của một vai trò
+   * @param {number} id - ID của vai trò
+   * @returns {Promise<Object>} - Thông tin vai trò
+   */
+  async getRoleById(id) {
+    try {
+      return await this.get(`/${id}`);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Tạo một vai trò mới
+   * @param {Object} roleData - Dữ liệu vai trò mới
    * @returns {Promise<Object>} - Kết quả trả về
    */
   async createRole(roleData) {
@@ -25,73 +50,91 @@ class RolesApi extends BaseApi {
   }
 
   /**
-   * Xóa chức vụ theo danh sách ID
-   * @param {Array<number>} roleIds - Danh sách ID chức vụ cần xóa
+   * Cập nhật một vai trò đã có
+   * @param {Object} roleData - Dữ liệu vai trò cập nhật
    * @returns {Promise<Object>} - Kết quả trả về
    */
-  async deleteRoles(roleIds) {
+  async updateRole(roleData) {
     try {
-      return await this.delete('/lock', roleIds);
+      return await this.put('', roleData);
     } catch (error) {
       throw error;
     }
   }
 
   /**
-   * Lấy danh sách chức vụ
-   * @returns {Promise<Object>} - Dữ liệu chức vụ
+   * Xóa một vai trò
+   * @param {number} id - ID của vai trò cần xóa
+   * @returns {Promise<Object>} - Kết quả trả về
    */
-  async getListRole() {
+  async deleteRole(id) {
     try {
-      const response = await this.get(`/list`);
-      if (response && response.data) {
-        return this.mapRoleData(response);
-      }
-      return response;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  mapRoleData(response) {
-    if (response && response.data && Array.isArray(response.data)) {
-      const mappedData = response.data.map((item) => ({
-        id: item.roleId,
-        roleName: item.roleName,
-        roleCode: item.roleCode,
-        roleDesc: item.roleDesc,
-        delFlag: item.delFlag,
-        updateBy: item.updateBy,
-        createTime: item.createTime,
-        updateTime: item.updateTime
-      }));
-      return { ...response, data: mappedData };
-    }
-    return response;
-  }
-
-  /**
-   * Tìm chức vụ theo ID
-   * @param {number} id - ID chức vụ
-   * @returns {Promise<Object>} - Dữ liệu chức vụ
-   */
-  async findRoleById(id) {
-    try {
-      return await this.get(`/${id}`);
+      return await this.delete(`/${id}`);
     } catch (error) {
       throw error;
     }
   }
 
   /**
-   * Cập nhật chức vụ
-   * @param {number} id - ID chức vụ
-   * @param {Object} roleData - Dữ liệu chức vụ cập nhật
-   * @returns {Promise<Object>} - Dữ liệu
+   * Tìm kiếm và phân trang các vai trò
+   * @param {Object} searchParams - Tham số tìm kiếm và phân trang
+   * @returns {Promise<Object>} - Kết quả tìm kiếm
    */
-  async updateRole(id, roleData) {
+  async searchRoles(searchParams) {
     try {
-      return await this.put(`/${id}`, roleData);
+      return await this.post('/search', searchParams);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Lấy danh sách các quyền của một vai trò
+   * @param {number} roleId - ID của vai trò
+   * @returns {Promise<Object>} - Danh sách quyền
+   */
+  async getRolePermissions(roleId) {
+    try {
+      return await this.get(`/${roleId}/permissions`);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Lấy danh sách các menu của một vai trò
+   * @param {number} roleId - ID của vai trò
+   * @returns {Promise<Object>} - Danh sách menu
+   */
+  async getRoleMenus(roleId) {
+    try {
+      return await this.get(`/${roleId}/menus`);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Gán quyền cho một vai trò
+   * @param {Object} permissionData - Dữ liệu gán quyền
+   * @returns {Promise<Object>} - Kết quả trả về
+   */
+  async assignPermissions(permissionData) {
+    try {
+      return await this.post('/assign-permissions', permissionData);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Gán menu cho một vai trò
+   * @param {Object} menuData - Dữ liệu gán menu
+   * @returns {Promise<Object>} - Kết quả trả về
+   */
+  async assignMenus(menuData) {
+    try {
+      return await this.post('/assign-menus', menuData);
     } catch (error) {
       throw error;
     }

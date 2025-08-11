@@ -10,10 +10,9 @@ const UserAdvancedFilter = ({ onFilter }) => {
   return (
     <AdvancedFilter
       initialValues={{
-        role: '',
-        status: '',
-        dateFrom: '',
-        dateTo: ''
+        sortBy: '',
+        sortDirection: '',
+        lockFlag: ''
       }}
       onFilter={onFilter}
     >

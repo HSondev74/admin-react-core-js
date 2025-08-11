@@ -15,6 +15,7 @@ import { useNotification } from '../../../contexts/NotificationContext';
 import { Switch } from '@mui/material';
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import rolesApi from '../../../infrastructure/api/http/role';
 
 const UserManagementPage = () => {
   // State
@@ -29,9 +30,38 @@ const UserManagementPage = () => {
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({});
+  const [roleList, setRoleList] = useState([]);
 
   //notification
   const { showNotification, hideNotification } = useNotification();
+
+  // Handle switch lock/unlock
+  const handleStatusToggle = useCallback(async (userId, currentStatus) => {
+    setLoading(true);
+    try {
+      let response;
+      const payload = { ids: [userId] };
+
+      if (currentStatus === '9') {
+        response = await usersApi.unlockUser(payload);
+      } else {
+        response = await usersApi.lockUser(payload);
+      }
+
+      // Refresh data sau khi update thành công
+      await fetchData({
+        page: pagination.page,
+        size: pagination.rowsPerPage,
+        sortBy: filters.sortBy || 'createTime',
+        sortDirection: filters.sortDirection || 'DESC',
+        searchTerm
+      });
+    } catch (error) {
+      console.error('Có lỗi khi cập nhật trạng thái:', error);
+    } finally {
+      setLoading(false);
+    }
+  });
 
   // Columns definition
   const columns = [
@@ -62,12 +92,13 @@ const UserManagementPage = () => {
       id: 'lockFlag',
       label: 'Trạng thái',
       minWidth: 150,
-      render: (value) => (
+      render: (value, row) => (
         <FormGroup>
           <FormControlLabel
             control={
               <Switch
-                checked={value === '1'}
+                checked={value === '9'}
+                onChange={() => handleStatusToggle(row.id, value)}
                 sx={{
                   marginLeft: { xs: '7vw', sm: '4vw', xl: '5vw' },
                   '& .MuiSwitch-switchBase': {
@@ -85,7 +116,7 @@ const UserManagementPage = () => {
                 }}
               />
             }
-            label="Lock"
+            label="Lock/Unlock"
           />
         </FormGroup>
       )
@@ -100,10 +131,10 @@ const UserManagementPage = () => {
       setLoading(true);
       try {
         const response = await usersApi.getListUser(params);
-        const resData = response?.data;
+        const resData = response?.data?.data;
         setData(resData.content);
         setFilteredData(resData.content);
-        setPagination({ page: resData?.number, rowsPerPage: resData?.size, totalItems: resData?.totalElements });
+        setPagination({ page: resData?.pageNumber, rowsPerPage: resData?.pageSize, totalItems: resData?.totalElements });
       } catch (err) {
         console.log('Lỗi khi gọi API:', err);
       } finally {
@@ -113,9 +144,20 @@ const UserManagementPage = () => {
     [setPagination]
   );
 
+  // pre-load get listrole with params
+  const fetchRoleList = async () => {
+    try {
+      const response = await rolesApi.getAllRoles();
+      setRoleList(response.data.data);
+    } catch (err) {
+      console.error('Lỗi khi gọi API lấy danh sách role:', err);
+    }
+  };
+
   useEffect(() => {
+    fetchRoleList();
     fetchData({ page: pagination.page, size: pagination.rowsPerPage });
-  }, [fetchData]);
+  }, []);
 
   // Handlers
   const handleSearch = useCallback(
@@ -138,18 +180,19 @@ const UserManagementPage = () => {
     (searchTerm, newFilters) => {
       setLoading(true);
 
-      const { role, status, dateFrom, dateTo } = newFilters;
+      const reqBody = {
+        page: 0,
+        size: pagination.rowsPerPage
+      };
 
-      setPagination((prev) => {
-        fetchData({ page: 0, size: prev.rowsPerPage, dateFrom, dateTo, searchTerm });
-        return {
-          ...prev,
-          page: 0,
-          rowsPerPage: prev.rowsPerPage
-        };
-      });
+      if (searchTerm) reqBody.searchTerm = searchTerm;
+      if (newFilters?.sortBy) reqBody.sortBy = newFilters.sortBy;
+      if (newFilters?.sortDirection) reqBody.sortDirection = newFilters.sortDirection;
 
-      setLoading(false);
+      setPagination((prev) => ({ ...prev, page: 0 }));
+      fetchData(reqBody);
+
+      setLoading(false, pagination.rowsPerPage);
     },
     [data]
   );
@@ -157,20 +200,40 @@ const UserManagementPage = () => {
   const handleChangePage = useCallback(
     (newPage) => {
       setPagination((prev) => {
-        fetchData({ page: newPage, size: prev.rowsPerPage });
+        const reqBody = {
+          page: newPage,
+          size: prev.rowsPerPage
+        };
+
+        // Chỉ thêm vào nếu có giá trị
+        if (searchTerm) reqBody.searchTerm = searchTerm;
+        if (filters?.sortBy) reqBody.sortBy = filters.sortBy;
+        if (filters?.sortDirection) reqBody.sortDirection = filters.sortDirection;
+
+        fetchData(reqBody);
         return {
           ...prev,
           page: newPage
         };
       });
     },
-    [fetchData]
+    [fetchData, filters, searchTerm]
   );
 
   const handleChangeRowsPerPage = useCallback(
     (newRowsPerPage) => {
       setPagination((prev) => {
-        fetchData({ page: 0, size: newRowsPerPage });
+        const reqBody = {
+          page: 0,
+          size: prev.rowsPerPage
+        };
+
+        // Chỉ thêm vào nếu có giá trị
+        if (searchTerm) reqBody.searchTerm = searchTerm;
+        if (filters?.sortBy) reqBody.sortBy = filters.sortBy;
+        if (filters?.sortDirection) reqBody.sortDirection = filters.sortDirection;
+
+        fetchData(reqBody);
         return {
           ...prev,
           page: 0,
@@ -178,19 +241,22 @@ const UserManagementPage = () => {
         };
       });
     },
-    [fetchData]
+    [fetchData, filters, searchTerm]
   );
   const handleCreate = useCallback(
     async (newData) => {
       try {
-        const response = await usersApi.register(newData);
+        const { lockFlag, ...rest } = newData;
+        await usersApi.register(rest);
 
-        if (!isSuccessCode(response.code)) {
-          showNotification(response.msg, 'error');
-        } else {
-          showNotification('Thêm nhân viên thành công', 'success');
-          await fetchData({ page: pagination.page, size: pagination.rowsPerPage });
-        }
+        showNotification('Thêm nhân viên thành công', 'success');
+        await fetchData({
+          page: pagination.page,
+          size: pagination.rowsPerPage,
+          sortBy: filters.sortBy || 'createTime',
+          sortDirection: filters.sortDirection || 'DESC',
+          searchTerm
+        });
       } catch (error) {
         console.error('Có lỗi khi tạo nhân viên:', error);
         showNotification('Có lỗi xảy ra!', 'error');
@@ -201,22 +267,23 @@ const UserManagementPage = () => {
 
   const handleEdit = useCallback(
     async (editedData) => {
-      console.log('editData', editedData);
       try {
         let response = await usersApi.updateUser(editedData.id, editedData);
 
-        if (!isSuccessCode(response.code)) {
-          showNotification(response.msg, 'error');
-        } else {
-          showNotification('Sửa nhân viên thành công', 'success');
-          await fetchData({ page: pagination.page, size: pagination.rowsPerPage });
-        }
+        showNotification('Sửa nhân viên thành công', 'success');
+        await fetchData({
+          page: pagination.page,
+          size: pagination.rowsPerPage,
+          sortBy: filters.sortBy || 'createTime',
+          sortDirection: filters.sortDirection || 'DESC',
+          searchTerm
+        });
       } catch (error) {
         console.error('Có lỗi khi cập nhật nhân viên:', error);
         showNotification('Có lỗi xảy ra!', 'error');
       }
     },
-    [data, searchTerm, filters]
+    [fetchData, pagination.page, pagination.rowsPerPage, searchTerm, filters]
   );
 
   const handleDelete = useCallback(
@@ -224,18 +291,20 @@ const UserManagementPage = () => {
       try {
         const response = await usersApi.deleteUsers(itemToDelete);
 
-        if (!isSuccessCode(response.code)) {
-          showNotification(response.msg, 'error');
-        } else {
-          showNotification('Xóa nhân viên thành công', 'success');
-          await fetchData({ page: pagination.page, size: pagination.rowsPerPage });
-        }
+        showNotification('Xóa nhân viên thành công', 'success');
+        await fetchData({
+          page: pagination.page,
+          size: pagination.rowsPerPage,
+          sortBy: filters.sortBy || 'createTime',
+          sortDirection: filters.sortDirection || 'DESC',
+          searchTerm
+        });
       } catch (error) {
         console.error('Có lỗi khi xóa nhân viên:', error);
         showNotification('Có lỗi xảy ra!', 'error');
       }
     },
-    [data, searchTerm, filters]
+    [fetchData, pagination.page, pagination.rowsPerPage, searchTerm, filters]
   );
 
   // Render component
@@ -244,6 +313,7 @@ const UserManagementPage = () => {
       title="Quản Lý Nhân Viên"
       data={filteredData}
       columns={columns}
+      page="users"
       filterComponent={<UserAdvancedFilter onFilter={handleFilter} />}
       searchPlaceholder="Tìm kiếm theo tên, email, số điện thoại..."
       onSearch={handleSearch}
@@ -253,13 +323,17 @@ const UserManagementPage = () => {
       permissions={{ create: true, edit: true, view: true, delete: true }}
       showCheckbox={true}
       actionType="icon-text"
-      createComponent={(props) => <UserFormAction {...props} title="Thêm nhân viên mới" isView={false} onSubmit={handleCreate} />}
-      editComponent={(props) => <UserFormAction {...props} title="Chỉnh sửa nhân viên" isView={false} onSubmit={handleEdit} />}
-      viewComponent={(props) => <UserFormAction {...props} title="Xem chi tiết nhân viên" isView={true} />}
+      createComponent={(props) => (
+        <UserFormAction {...props} roleList={roleList} title="Thêm nhân viên mới" isView={false} onSubmit={handleCreate} />
+      )}
+      editComponent={(props) => (
+        <UserFormAction {...props} roleList={roleList} title="Chỉnh sửa nhân viên" isView={false} onSubmit={handleEdit} />
+      )}
+      viewComponent={(props) => <UserFormAction {...props} roleList={roleList} title="Xem chi tiết nhân viên" isView={true} />}
       collapsible={false}
       loading={loading}
-      paginatePage={handleChangePage}
-      onChangion={pagination}
+      onChangePage={handleChangePage}
+      pagination={pagination}
       onChangeRowsPerPage={handleChangeRowsPerPage}
       enableSearch={true}
       enableFilter={true}
