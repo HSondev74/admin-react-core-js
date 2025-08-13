@@ -74,7 +74,7 @@ const UserManagementPage = () => {
     {
       id: 'username',
       label: 'Tên đăng nhập',
-      minWidth: 150,
+      minWidth: 130,
       sortable: true
     },
     {
@@ -86,12 +86,12 @@ const UserManagementPage = () => {
     {
       id: 'phone',
       label: 'Số điện thoại',
-      minWidth: 120
+      minWidth: 130
     },
     {
       id: 'lockFlag',
       label: 'Trạng thái',
-      minWidth: 150,
+      minWidth: 160,
       render: (value, row) => (
         <FormGroup>
           <FormControlLabel
@@ -100,7 +100,6 @@ const UserManagementPage = () => {
                 checked={value === '9'}
                 onChange={() => handleStatusToggle(row.id, value)}
                 sx={{
-                  marginLeft: { xs: '7vw', sm: '4vw', xl: '5vw' },
                   '& .MuiSwitch-switchBase': {
                     color: 'green',
                     '& + .MuiSwitch-track': {

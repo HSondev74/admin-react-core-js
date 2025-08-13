@@ -311,7 +311,7 @@ const DictionaryPage = () => {
       <Grid container spacing={3}>
         <Grid item lg={12} xl={6}>
           <Paper sx={{ p: 2 }}>
-            <Typography variant="h4" gutterBottom>
+            <Typography variant="h3" gutterBottom>
               Từ điển
             </Typography>
             <CustomDataPage
@@ -340,7 +340,7 @@ const DictionaryPage = () => {
         </Grid>
         <Grid item lg={12} xl={6}>
           <Paper sx={{ p: 2 }}>
-            <Typography variant="h4" gutterBottom>
+            <Typography variant="h3" gutterBottom>
               Chi tiết từ điển
             </Typography>
             {selectedDict && <Typography>Từ điển: {selectedDict.name}</Typography>}

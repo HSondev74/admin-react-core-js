@@ -55,14 +55,14 @@ const pages = {
     },
     {
       id: 'user-mangement',
-      title: 'Quản lý Người dùng',
+      title: 'Quản lý người dùng',
       type: 'item',
       url: '/user-mangement',
       icon: icons.UserOutlined
     },
     {
       id: 'role-mangement',
-      title: 'Quản lý Chức vụ',
+      title: 'Quản lý chức vụ',
       type: 'item',
       url: '/role-mangement',
       icon: icons.TeamOutlined

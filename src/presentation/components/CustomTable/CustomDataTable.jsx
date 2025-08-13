@@ -239,6 +239,7 @@ const CustomDataTable = ({
           anchorEl={anchorEl}
           open={open}
           onClose={handleCloseMenu}
+          elevation={1}
           MenuListProps={{
             'aria-labelledby': 'basic-button'
           }}
@@ -316,7 +317,7 @@ const CustomDataTable = ({
               {columns.map((column) => (
                 <TableCell
                   key={column.id}
-                  align="center"
+                  align="left"
                   sx={{
                     ...tableStyles.tableHeadCellData,
                     minWidth: tableStyles.tableHeadCellData.minWidth(column),
@@ -352,7 +353,7 @@ const CustomDataTable = ({
                     (collapsible ? 1 : 0) +
                     (permissions.edit || permissions.view || permissions.delete ? 1 : 0)
                   }
-                  align="center"
+                  align="left"
                 >
                   <CircularProgress size={40} />
                   <Typography variant="body2" sx={{ mt: 1 }}>
@@ -369,7 +370,7 @@ const CustomDataTable = ({
                     (collapsible ? 1 : 0) +
                     (permissions.edit || permissions.view || permissions.delete ? 1 : 0)
                   }
-                  align="center"
+                  align="left"
                 >
                   <Typography variant="body2">Không có dữ liệu</Typography>
                 </TableCell>
@@ -412,10 +413,16 @@ const CustomDataTable = ({
                           />
                         </TableCell>
                       )}
-                      {columns.map((column) => {
+                      {columns.map((column, colIndex) => {
                         const value = row[column.id];
                         return (
-                          <TableCell key={column.id} align={column.align || 'center'}>
+                          <TableCell
+                            key={column.id}
+                            align={column.align || 'left'}
+                            sx={{
+                              borderRight: colIndex < columns.length - 1 ? '1px solid #e0e0e0' : 'none'
+                            }}
+                          >
                             {column.render ? column.render(value, row) : value}
                           </TableCell>
                         );
@@ -427,7 +434,7 @@ const CustomDataTable = ({
                     {collapsible && (
                       <TableRow>
                         <TableCell
-                          sx={tableStyles.collapsibleRow}
+                          sx={{ ...tableStyles.collapsibleRow, borderBottom: '1px solid #e0e0e0' }}
                           colSpan={
                             columns.length +
                             (showCheckbox ? 1 : 0) +
