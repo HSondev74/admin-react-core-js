@@ -3,7 +3,7 @@ import { lazy } from 'react';
 // project imports
 import Loadable from '../presentation/components/Loadable';
 import DashboardLayout from '../presentation/components/layout/Dashboard';
-import MenuManagement from '../presentation/screen/component-overview/menu';
+import MenuManagement from '../presentation/screen/menus';
 
 // render- Dashboard
 const DashboardDefault = Loadable(lazy(() => import('../presentation/screen/dashboard/default')));
