@@ -28,6 +28,7 @@ const CustomDataPage = ({
   onSearch,
   onView,
   onDelete,
+  onAddChild,
   permissions = { create: true, edit: true, view: true, delete: true },
   showCheckbox = true,
   actionType = 'icon-text', // 'icon', 'text', 'icon-text'
@@ -210,6 +211,7 @@ const CustomDataPage = ({
           onEdit={handleEdit}
           onView={handleView}
           onDelete={handleDeleteConfirm}
+          onAddChild={onAddChild}
           enablePagination={enablePagination}
           selected={selectedItems}
           setSelected={setSelectedItems}
@@ -285,6 +287,7 @@ CustomDataPage.propTypes = {
   onEdit: PropTypes.func,
   onView: PropTypes.func,
   onDelete: PropTypes.func,
+  onAddChild: PropTypes.func,
   permissions: PropTypes.shape({
     create: PropTypes.bool,
     edit: PropTypes.bool,

@@ -18,7 +18,7 @@ import Collapse from '@mui/material/Collapse';
 import Typography from '@mui/material/Typography';
 import { Menu, MenuItem } from '@mui/material';
 //antd icon
-import { ArrowDownOutlined, ArrowRightOutlined, DeleteOutlined, EditOutlined, EyeOutlined, MoreOutlined } from '@ant-design/icons';
+import { ArrowDownOutlined, ArrowRightOutlined, DeleteOutlined, EditOutlined, EyeOutlined, MoreOutlined, PlusOutlined } from '@ant-design/icons';
 // style
 import { tableStyles } from '../../assets/styles/tableStyles';
 
@@ -41,6 +41,7 @@ const CustomDataTable = ({
   onEdit,
   onView,
   onDelete,
+  onAddChild, // New prop for add child functionality
   enablePagination = true,
   selected,
   setSelected
@@ -177,6 +178,15 @@ const CustomDataTable = ({
     [onDelete]
   );
 
+  const handleAddChild = useCallback(
+    (item) => {
+      if (onAddChild) {
+        onAddChild(item);
+      }
+    },
+    [onAddChild]
+  );
+
   const toggleRowExpand = useCallback((id) => {
     setExpandedRows((prev) => ({
       ...prev,
@@ -210,6 +220,17 @@ const CustomDataTable = ({
             'aria-labelledby': 'basic-button'
           }}
         >
+          {onAddChild && (
+            <MenuItem
+              onClick={() => {
+                handleAddChild(selectedItem);
+                handleCloseMenu();
+              }}
+              sx={{ color: 'success.main' }}
+            >
+              <PlusOutlined style={tableStyles.menuItemIcon} /> Thêm con
+            </MenuItem>
+          )}
           {permissions.view && (
             <MenuItem
               onClick={() => {
@@ -246,7 +267,7 @@ const CustomDataTable = ({
         </Menu>
       </Box>
     ),
-    [open, anchorEl, selectedItem, permissions, handleView, handleEdit, handleDelete, handleClickMenu, handleCloseMenu]
+    [open, anchorEl, selectedItem, permissions, onAddChild, handleView, handleEdit, handleDelete, handleAddChild, handleClickMenu, handleCloseMenu]
   );
 
   return (
@@ -293,7 +314,7 @@ const CustomDataTable = ({
                   )}
                 </TableCell>
               ))}
-              {(permissions.edit || permissions.view || permissions.delete) && (
+              {(permissions.edit || permissions.view || permissions.delete || onAddChild) && (
                 <TableCell sx={tableStyles.tableHeadCellActions}>Thao tác</TableCell>
               )}
             </TableRow>
@@ -306,7 +327,7 @@ const CustomDataTable = ({
                     columns.length +
                     (showCheckbox ? 1 : 0) +
                     (collapsible ? 1 : 0) +
-                    (permissions.edit || permissions.view || permissions.delete ? 1 : 0)
+                    (permissions.edit || permissions.view || permissions.delete || onAddChild ? 1 : 0)
                   }
                   align="center"
                 >
@@ -323,7 +344,7 @@ const CustomDataTable = ({
                     columns.length +
                     (showCheckbox ? 1 : 0) +
                     (collapsible ? 1 : 0) +
-                    (permissions.edit || permissions.view || permissions.delete ? 1 : 0)
+                    (permissions.edit || permissions.view || permissions.delete || onAddChild ? 1 : 0)
                   }
                   align="center"
                 >
@@ -365,7 +386,7 @@ const CustomDataTable = ({
                           </TableCell>
                         );
                       })}
-                      {(permissions.edit || permissions.view || permissions.delete) && (
+                      {(permissions.edit || permissions.view || permissions.delete || onAddChild) && (
                         <TableCell sx={tableStyles.tableBodyCellActions}>{renderActionButtons(row)}</TableCell>
                       )}
                     </TableRow>
@@ -377,7 +398,7 @@ const CustomDataTable = ({
                             columns.length +
                             (showCheckbox ? 1 : 0) +
                             1 + // Expand column
-                            (permissions.edit || permissions.view || permissions.delete ? 1 : 0)
+                            (permissions.edit || permissions.view || permissions.delete || onAddChild ? 1 : 0)
                           }
                         >
                           <Collapse in={isExpanded} timeout="auto" unmountOnExit>
@@ -446,6 +467,7 @@ CustomDataTable.propTypes = {
   onEdit: PropTypes.func,
   onView: PropTypes.func,
   onDelete: PropTypes.func,
+  onAddChild: PropTypes.func,
   enablePagination: PropTypes.bool,
   selected: PropTypes.array,
   setSelected: PropTypes.func

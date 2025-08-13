@@ -1,18 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, Chip, Tooltip } from '@mui/material';
-import { MoreOutlined } from '@ant-design/icons';
+import { Box, Typography } from '@mui/material';
 // Components
-import MenuDataTable from './MenuDataTable';
-import MainCard from '../../components/MainCard';
-// Material UI
-import { Button, Stack, TextField, InputAdornment, Collapse, Divider } from '@mui/material';
-// Icons
-import { PlusOutlined, SearchOutlined, FilterOutlined } from '@ant-design/icons';
-// Styles
-import { pageStyles, modalWrapperStyles } from '../../assets/styles/pageStyles';
+import CustomDataPage from '../../components/CustomTable/CustomDataPage';
 import ModalWrapper from '../../components/CustomTable/ModalWrapper';
 import MenuFormAction from './MenuFormAction';
 import MenuAdvancedFilter from './MenuAdvancedFilter';
+// Utils and handlers
+import { getMenuColumns } from './menuColumns';
+import { createMenuHandlers } from './menuHandlers';
+// Styles
+import { modalWrapperStyles } from '../../assets/styles/pageStyles';
 // Api
 import menuApi from '../../../infrastructure/api/http/menuApi';
 
@@ -40,11 +37,6 @@ export default function MenuManagement() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [childFormOpen, setChildFormOpen] = useState(false);
   const [parentMenuItem, setParentMenuItem] = useState(null);
-  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [openCreateForm, setOpenCreateForm] = useState(false);
-  const [openEditForm, setOpenEditForm] = useState(false);
-  const [currentItem, setCurrentItem] = useState(null);
 
   // Function to refresh menu data
   const refreshMenuData = async () => {
@@ -170,277 +162,37 @@ export default function MenuManagement() {
     }
   ];
 
-  // Search functionality
+  // Create handlers
+  const {
+    handleDelete: handleDeleteFromHandlers,
+    handleSearch: handleSearchFromHandlers,
+    handleAdvancedFilter,
+    handleResetFilter,
+    handleChangePage,
+    handleChangeRowsPerPage,
+    getPaginatedData
+  } = createMenuHandlers(
+    menus,
+    setMenus,
+    filteredMenus,
+    setFilteredMenus,
+    searchTerm,
+    activeFilters,
+    setActiveFilters,
+    page,
+    setPage,
+    rowsPerPage,
+    setRowsPerPage
+  );
+
+  // Update search term state
   const handleSearch = (searchValue) => {
     setSearchTerm(searchValue);
-    if (!searchValue.trim()) {
-      setFilteredMenus(menus);
-      return;
-    }
-
-    const filterMenus = (menuList) => {
-      const filtered = [];
-      menuList.forEach((menu) => {
-        const item = menu.item;
-        const matchesSearch =
-          item.name?.toLowerCase().includes(searchValue.toLowerCase()) ||
-          item.path?.toLowerCase().includes(searchValue.toLowerCase()) ||
-          item.menuType?.toLowerCase().includes(searchValue.toLowerCase());
-
-        if (matchesSearch) {
-          filtered.push(menu);
-        } else if (menu.children && menu.children.length > 0) {
-          const filteredChildren = filterMenus(menu.children);
-          if (filteredChildren.length > 0) {
-            filtered.push({
-              ...menu,
-              children: filteredChildren
-            });
-          }
-        }
-      });
-      return filtered;
-    };
-
-    const searchFiltered = filterMenus(menus);
-    applyAdvancedFilters(searchFiltered, activeFilters);
+    handleSearchFromHandlers(searchValue);
   };
 
-  // Advanced filter functionality
-  const applyAdvancedFilters = (menuList, filters) => {
-    if (!filters || Object.keys(filters).length === 0) {
-      setFilteredMenus(menuList);
-      return;
-    }
-
-    // First flatten the menu tree to apply filters
-    const flatMenus = listMenus(menuList);
-
-    const filteredFlat = flatMenus.filter((menu) => {
-      const item = menu.item;
-      const hasChildren = menu.children && menu.children.length > 0;
-      const menuType = hasChildren ? 'Parent' : menu.level > 0 ? 'Child' : 'Single';
-      const menuRoles = item.roles || [];
-
-      // Filter by menu type
-      if (filters.menuType && menuType !== filters.menuType) {
-        return false;
-      }
-
-      // Filter by has children
-      if (filters.hasChildren !== '') {
-        const hasChildrenBool = filters.hasChildren === 'true';
-        if (hasChildren !== hasChildrenBool) {
-          return false;
-        }
-      }
-
-      // Filter by roles
-      if (filters.roles && filters.roles.length > 0) {
-        const hasMatchingRole = filters.roles.some((roleId) => menuRoles.includes(roleId));
-        if (!hasMatchingRole) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-
-    // Rebuild tree structure from filtered flat list
-    const rebuildTree = (flatList) => {
-      const rootMenus = flatList.filter((menu) => menu.level === 0);
-      const buildChildren = (parentMenu, level) => {
-        const children = flatList.filter((menu) => menu.level === level + 1 && menu.item.parentId === parentMenu.item.id);
-        return children.map((child) => ({
-          ...child,
-          children: buildChildren(child, level + 1)
-        }));
-      };
-
-      return rootMenus.map((root) => ({
-        ...root,
-        children: buildChildren(root, 0)
-      }));
-    };
-
-    // If filtering by Child, just return the flat filtered list as tree structure
-    if (filters.menuType === 'Child') {
-      setFilteredMenus(filteredFlat.map((menu) => ({ ...menu, children: [] })));
-    } else {
-      setFilteredMenus(rebuildTree(filteredFlat));
-    }
-  };
-
-  const handleAdvancedFilter = (filters) => {
-    setActiveFilters(filters);
-    const searchFiltered = searchTerm ? filteredMenus : menus;
-    applyAdvancedFilters(searchFiltered, filters);
-  };
-
-  const handleResetFilter = () => {
-    setActiveFilters({});
-    const searchFiltered = searchTerm ? filteredMenus : menus;
-    setFilteredMenus(searchFiltered);
-  };
-
-  // Pagination handlers
-  const handleChangePage = (newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (newRowsPerPage) => {
-    setRowsPerPage(newRowsPerPage);
-    setPage(0); // Reset to first page
-  };
-
-  // Get paginated data
-  const getPaginatedData = () => {
-    const allData = listMenus(filteredMenus);
-    const startIndex = page * rowsPerPage;
-    const endIndex = startIndex + rowsPerPage;
-    return allData.slice(startIndex, endIndex);
-  };
-
-  // Define columns for the table
-  const columns = [
-    {
-      id: 'name',
-      label: 'Menu Name',
-      minWidth: 200,
-      render: (value, row) => {
-        const item = row.item;
-        const hasChildren = row.children && row.children.length > 0;
-        return (
-          <Box sx={{ display: 'flex', alignItems: 'center', pl: row.level * 2 }}>
-            {row.level > 0 && <Box sx={{ mr: 1, color: 'text.secondary' }}>└─</Box>}
-            <Typography
-              variant="body1"
-              sx={{
-                fontWeight: row.level === 0 ? 'bold' : 'normal',
-                color: row.level === 0 ? 'primary.main' : 'text.primary'
-              }}
-            >
-              {item.name}
-              {hasChildren && (
-                <Box component="span" sx={{ ml: 1, fontSize: '0.8rem', color: 'text.secondary' }}>
-                  ({row.children.length})
-                </Box>
-              )}
-            </Typography>
-          </Box>
-        );
-      }
-    },
-    {
-      id: 'path',
-      label: 'Path',
-      minWidth: 150,
-      render: (value, row) => (
-        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
-          {row.item.path || row.item.url}
-        </Typography>
-      )
-    },
-    {
-      id: 'sortOrder',
-      label: 'Order',
-      minWidth: 80,
-      render: (value, row) => row.item.sortOrder || 0
-    },
-    {
-      id: 'type',
-      label: 'Menu Type',
-      minWidth: 100,
-      render: (value, row) => {
-        const menuType = row.item.menuType || 'Unknown';
-        return (
-          <Chip label={menuType} size="small" color={menuType === 'Parent' ? 'primary' : menuType === 'Child' ? 'secondary' : 'default'} />
-        );
-      }
-    },
-    {
-      id: 'roles',
-      label: 'Roles',
-      minWidth: 220,
-      render: (value, row) => {
-        const menuRoles = row.item.roles || [];
-        const maxVisible = 2;
-
-        if (menuRoles.length === 0) {
-          return (
-            <Typography variant="body2" sx={{ color: 'text.disabled', fontSize: '0.8rem' }}>
-              Chưa gán quyền
-            </Typography>
-          );
-        }
-
-        const visibleRoles = menuRoles.slice(0, maxVisible);
-        const hiddenRoles = menuRoles.slice(maxVisible);
-        const allRoleNames = menuRoles
-          .map((roleId) => {
-            const role = availableRoles.find((r) => r.id === roleId);
-            return role?.name || 'Unknown';
-          })
-          .join(', ');
-
-        return (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, maxWidth: 200 }}>
-            {/* Hiển thị tối đa 2 roles */}
-            {visibleRoles.map((roleId) => {
-              const role = availableRoles.find((r) => r.id === roleId);
-              return role ? (
-                <Chip
-                  key={roleId}
-                  label={role.name}
-                  size="small"
-                  variant="outlined"
-                  sx={{
-                    fontSize: '0.7rem',
-                    maxWidth: '80px',
-                    '& .MuiChip-label': {
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }
-                  }}
-                />
-              ) : null;
-            })}
-
-            {/* Nút "..." với tooltip hiển thị tất cả roles */}
-            {hiddenRoles.length > 0 && (
-              <Tooltip
-                title={
-                  <Box>
-                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                      Tất cả quyền:
-                    </Typography>
-                    <Typography variant="body2">{allRoleNames}</Typography>
-                  </Box>
-                }
-                arrow
-                placement="top"
-              >
-                <Chip
-                  icon={<MoreOutlined style={{ fontSize: '12px' }} />}
-                  label={`+${hiddenRoles.length}`}
-                  size="small"
-                  color="primary"
-                  variant="filled"
-                  sx={{
-                    fontSize: '0.7rem',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      backgroundColor: 'primary.dark'
-                    }
-                  }}
-                />
-              </Tooltip>
-            )}
-          </Box>
-        );
-      }
-    }
-  ];
+  // Get columns configuration
+  const columns = getMenuColumns(availableRoles);
 
   if (error) {
     return (
@@ -452,100 +204,31 @@ export default function MenuManagement() {
 
   return (
     <>
-      <Box sx={pageStyles.root}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-          <Typography sx={pageStyles.title}>Menu Management</Typography>
-          <Button sx={pageStyles.createButton} startIcon={<PlusOutlined />} onClick={() => setOpenCreateForm(true)}>
-            Thêm mới
-          </Button>
-        </Stack>
-
-        <MainCard
-          sx={pageStyles.mainCard}
-          title={
-            <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
-              <Box sx={pageStyles.searchContainer}>
-                <TextField
-                  placeholder="Tìm kiếm menu theo tên, đường dẫn..."
-                  value={searchTerm}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  variant="outlined"
-                  size="small"
-                  sx={{ width: { xs: '100%', md: '400px' } }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchOutlined style={{ fontSize: '16px' }} />
-                      </InputAdornment>
-                    )
-                  }}
-                />
-              </Box>
-              <div style={pageStyles.actionButtons}>
-                {selectedItems.length > 0 && (
-                  <Button variant="contained" color="error" onClick={() => handleDelete(selectedItems)}>
-                    Xóa {selectedItems.length} mục đã chọn
-                  </Button>
-                )}
-                <Button variant="contained" color="warning" onClick={() => setShowAdvancedFilter((prev) => !prev)}>
-                  <FilterOutlined style={pageStyles.filterIcon} /> Lọc nâng cao
-                </Button>
-              </div>
-            </Stack>
-          }
-        >
-          <Collapse in={showAdvancedFilter}>
-            <Divider sx={pageStyles.collapseDivider} />
-            <MenuAdvancedFilter availableRoles={availableRoles} onFilter={handleAdvancedFilter} />
-          </Collapse>
-        </MainCard>
-
-        <MenuDataTable
-          data={getPaginatedData()}
-          columns={columns}
-          loading={loading}
-          showCheckbox={true}
-          permissions={{
-            edit: true,
-            view: false,
-            delete: true
-          }}
-          pagination={{ page, rowsPerPage, totalItems: listMenus(filteredMenus).length }}
-          onChangePage={handleChangePage}
-          onChangeRowsPerPage={handleChangeRowsPerPage}
-          onSelectionChange={setSelectedItems}
-          onEdit={(item) => {
-            setCurrentItem(item);
-            setOpenEditForm(true);
-          }}
-          onDelete={handleDelete}
-          onAddChild={handleAddChild}
-          enablePagination={true}
-          selected={selectedItems}
-          setSelected={setSelectedItems}
-        />
-      </Box>
-
-      {/* Create Modal */}
-      <ModalWrapper
-        open={openCreateForm}
-        title="Thêm mới"
-        content={<MenuFormAction item={null} onClose={() => setOpenCreateForm(false)} />}
-        showActions={false}
-        onClose={() => setOpenCreateForm(false)}
-        maxWidth="sm"
-        styles={modalWrapperStyles}
-      />
-
-      {/* Edit Modal */}
-      <ModalWrapper
-        open={openEditForm}
-        title="Chỉnh sửa"
-        content={<MenuFormAction item={currentItem} onClose={() => setOpenEditForm(false)} />}
-        showActions={false}
-        onClose={() => setOpenEditForm(false)}
-        maxWidth="md"
-        styles={modalWrapperStyles}
+      <CustomDataPage
+        title="Menu Management"
+        data={getPaginatedData()}
+        columns={columns}
+        loading={loading}
+        showCheckbox={true}
+        enablePagination={true}
+        enableSearch={true}
+        enableFilter={true}
+        searchPlaceholder="Tìm kiếm menu theo tên, đường dẫn..."
+        onSearch={handleSearch}
+        filterComponent={<MenuAdvancedFilter availableRoles={availableRoles} onFilter={handleAdvancedFilter} />}
+        permissions={{
+          create: true,
+          edit: true,
+          view: false,
+          delete: true
+        }}
+        pagination={{ page, rowsPerPage, totalItems: listMenus(filteredMenus).length }}
+        onChangePage={handleChangePage}
+        onChangeRowsPerPage={handleChangeRowsPerPage}
+        onDelete={handleDeleteFromHandlers}
+        onAddChild={handleAddChild}
+        createComponent={({ item, onClose }) => <MenuFormAction item={item} onClose={onClose} />}
+        editComponent={({ item, onClose }) => <MenuFormAction item={item} onClose={onClose} />}
       />
 
       {/* Modal for adding child menu */}
