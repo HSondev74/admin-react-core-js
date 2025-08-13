@@ -1,4 +1,3 @@
-import axiosInstance from '../../../app/config/axiosInstance';
 import BaseApi from './BaseApi';
 
 /**
@@ -53,12 +52,13 @@ class UsersApi extends BaseApi {
 
   /**
    * Lấy danh sách người dùng có phân trang
-   * @param {number} page - Trang hiện tại (bắt đầu từ 0)
-   * @param {number} size - Số lượng bản ghi mỗi trang
-   * @param {string} role - Vai trò (tùy chọn)
-   * @param {string} status - Trạng thái (tùy chọn)
-   * @param {string} dateFrom - Ngày bắt đầu (tùy chọn)
-   * @param {string} dateTo - Ngày kết thúc (tùy chọn)
+   * @param {Object} body - Dữ liệu tìm kiếm
+   * @param {number} body.page - Trang hiện tại (bắt đầu từ 0)
+   * @param {number} body.size - Số lượng bản ghi mỗi trang
+   * @param {string} body.sortBy - Sắp xếp bởi
+   * @param {string} body.searchTerm - Tìm kiếm theo
+   * @param {string} body.sortDirection - Sắp xếp theo
+   * @param {string} body.roleIds - Mảng roles cần tìm
    * @returns {Promise<Object>} - Dữ liệu người dùng
    */
   async getListUser(body = {}) {
@@ -109,7 +109,7 @@ class UsersApi extends BaseApi {
    */
   async findUserById(id) {
     try {
-      return await this.get(`/${id}`); // GET /api/users/{id}
+      return await this.get(`/${id}`);
     } catch (error) {
       throw error;
     }

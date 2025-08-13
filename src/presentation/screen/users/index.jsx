@@ -310,7 +310,7 @@ const UserManagementPage = () => {
   // Render component
   return (
     <CustomDataPage
-      title="Quản Lý Nhân Viên"
+      title="Quản lý nhân viên"
       data={data}
       columns={columns}
       page="users"
@@ -324,12 +324,12 @@ const UserManagementPage = () => {
       showCheckbox={true}
       actionType="icon-text"
       createComponent={(props) => (
-        <UserFormAction {...props} roleList={roleList} title="Thêm nhân viên mới" isView={false} onSubmit={handleCreate} />
+        <UserFormAction {...props} roleList={roleList.content} title="Thêm nhân viên mới" isView={false} onSubmit={handleCreate} />
       )}
       editComponent={(props) => (
-        <UserFormAction {...props} roleList={roleList} title="Chỉnh sửa nhân viên" isView={false} onSubmit={handleEdit} />
+        <UserFormAction {...props} roleList={roleList.content} title="Chỉnh sửa nhân viên" isView={false} onSubmit={handleEdit} />
       )}
-      viewComponent={(props) => <UserFormAction {...props} roleList={roleList} title="Xem chi tiết nhân viên" isView={true} />}
+      viewComponent={(props) => <UserFormAction {...props} roleList={roleList.content} title="Xem chi tiết nhân viên" isView={true} />}
       collapsible={false}
       loading={loading}
       onChangePage={handleChangePage}

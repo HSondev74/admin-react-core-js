@@ -26,10 +26,11 @@ const CustomDataPage = ({
   page = '',
   filterComponent,
   searchPlaceholder = 'Tìm kiếm...',
+  emptyMessage = '',
   onSearch,
-  onAssignRoleToUsers,
   onView,
   onDelete,
+  onRowClick,
   permissions = { assignRole: true, create: true, edit: true, view: true, delete: true },
   showCheckbox = true,
   actionType = 'icon-text', // 'icon', 'text', 'icon-text'
@@ -142,6 +143,15 @@ const CustomDataPage = ({
     setCurrentItem(null);
   }, []);
 
+  const handleRowClick = useCallback(
+    (item) => {
+      if (onRowClick) {
+        onRowClick(item);
+      }
+    },
+    [onRowClick]
+  );
+
   return (
     <>
       <Box sx={pageStyles.root}>
@@ -208,6 +218,7 @@ const CustomDataPage = ({
           columns={columns}
           loading={loading}
           showCheckbox={showCheckbox}
+          emptyMessage={emptyMessage}
           actionType={actionType}
           permissions={permissions}
           collapsible={collapsible}
@@ -220,6 +231,7 @@ const CustomDataPage = ({
           onEdit={handleEdit}
           onView={handleView}
           onDelete={handleDeleteConfirm}
+          onRowClick={handleRowClick}
           enablePagination={enablePagination}
           selected={selectedItems}
           setSelected={setSelectedItems}
@@ -316,6 +328,7 @@ CustomDataPage.propTypes = {
   onEdit: PropTypes.func,
   onView: PropTypes.func,
   onDelete: PropTypes.func,
+  onRowClick: PropTypes.func,
   permissions: PropTypes.shape({
     create: PropTypes.bool,
     edit: PropTypes.bool,

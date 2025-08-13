@@ -13,11 +13,17 @@ class RolesApi extends BaseApi {
 
   /**
    * Lấy danh sách tất cả các vai trò
-   * @returns {Promise<Object>} - Danh sách vai trò
+   * @param {Object} body - Dữ liệu tìm kiếm
+   * @param {number} body.page - Trang hiện tại (bắt đầu từ 0)
+   * @param {number} body.size - Số lượng bản ghi mỗi trang
+   * @param {string} body.sortBy - Sắp xếp bởi
+   * @param {string} body.searchTerm - Tìm kiếm theo
+   * @param {string} body.sortDirection - Sắp xếp theo
+   * @returns {Promise<Object>} - Dữ liệu người dùng
    */
   async getAllRoles(body = {}) {
     try {
-      const { page, size, sortBy, searchTerm, sortDirection, roleIds } = body;
+      const { page, size, sortBy, searchTerm, sortDirection } = body;
 
       const paramMap = {
         page: 'page',

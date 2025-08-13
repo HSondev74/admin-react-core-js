@@ -1,12 +1,13 @@
 // assets
-import { LoginOutlined, ProfileOutlined, UserOutlined, TeamOutlined } from '@ant-design/icons';
+import { LoginOutlined, ProfileOutlined, UserOutlined, TeamOutlined, ReadOutlined } from '@ant-design/icons';
 
 // icons
 const icons = {
   LoginOutlined,
   ProfileOutlined,
   UserOutlined,
-  TeamOutlined
+  TeamOutlined,
+  ReadOutlined
 };
 
 // ==============================|| MENU ITEMS - EXTRA PAGES ||============================== //
@@ -65,6 +66,13 @@ const pages = {
       type: 'item',
       url: '/role-mangement',
       icon: icons.TeamOutlined
+    },
+    {
+      id: 'dictionary',
+      title: 'Quản lý từ điển',
+      type: 'item',
+      url: '/dictionary',
+      icon: icons.ReadOutlined
     }
   ]
 };

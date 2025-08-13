@@ -50,6 +50,7 @@ const CustomDataTable = ({
   onEdit,
   onView,
   onDelete,
+  onRowClick,
   enablePagination = true,
   selected,
   setSelected
@@ -195,6 +196,20 @@ const CustomDataTable = ({
     [onDelete]
   );
 
+  const handleRowClick = useCallback(
+    (row, event) => {
+      if (!onRowClick) return;
+
+      // Tránh trigger khi click vào checkbox hoặc action buttons
+      if (event.target.closest('input[type="checkbox"]') || event.target.closest('button') || event.target.closest('[role="button"]')) {
+        return;
+      }
+
+      onRowClick(row);
+    },
+    [onRowClick]
+  );
+
   const toggleRowExpand = useCallback((id) => {
     setExpandedRows((prev) => ({
       ...prev,
@@ -207,7 +222,7 @@ const CustomDataTable = ({
   // Render action buttons for each row
   const renderActionButtons = useCallback(
     (item) => (
-      <Box sx={tableStyles.actionButtonStyle}>
+      <Box>
         <IconButton
           aria-label="more actions"
           aria-controls={open ? 'actions-menu' : undefined}
@@ -366,7 +381,18 @@ const CustomDataTable = ({
 
                 return (
                   <>
-                    <TableRow hover role="checkbox" aria-checked={isItemSelected} tabIndex={-1} key={row.id} selected={isItemSelected}>
+                    <TableRow
+                      hover
+                      role="checkbox"
+                      aria-checked={isItemSelected}
+                      tabIndex={-1}
+                      key={row.id}
+                      selected={isItemSelected}
+                      onClick={onRowClick ? (event) => handleRowClick(row, event) : undefined}
+                      sx={{
+                        cursor: onRowClick ? 'pointer' : 'default'
+                      }}
+                    >
                       {collapsible && (
                         <TableCell sx={tableStyles.tableBodyCellExpand}>
                           <IconButton aria-label="expand row" size="small" onClick={() => toggleRowExpand(row.id)}>
