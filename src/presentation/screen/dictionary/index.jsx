@@ -1,43 +1,72 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useState, useCallback } from 'react';
-
 // Custom components
 import CustomDataPage from '../../components/CustomTable/CustomDataPage';
-
 import DictionaryFormAction from './DictionaryFormAction';
 import DictionaryItemFormAction from './DictionaryItemFormAction';
 
 //notification
 import { useNotification } from '../../../contexts/NotificationContext';
 import { Box } from '@mui/system';
-import { Grid, Grid2, Paper, Typography } from '@mui/material';
+import { Grid, Paper, Typography } from '@mui/material';
 import dictionarieItemsApi from '../../../infrastructure/api/http/dictionaryItem';
 import dictionariesApi from '../../../infrastructure/api/http/dictionaries';
+import { isSuccessCode } from '../../../app/utils/constants';
+import { useCallback, useState } from 'react';
+import useSWR, { mutate } from 'swr';
 
 const DictionaryPage = () => {
-  // State for dictionaries
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState([]);
+  // State for search and pagination
   const [searchTerm, setSearchTerm] = useState('');
   const [pagination, setPagination] = useState({
     page: 1,
-    rowsPerPage: 10,
-    totalItems: 0
+    rowsPerPage: 10
   });
 
   // State for dictionary items
-  const [itemsLoading, setItemsLoading] = useState(false);
-  const [itemsData, setItemsData] = useState([]);
   const [selectedDict, setSelectedDict] = useState(null);
   const [itemSearchTerm, setItemSearchTerm] = useState('');
   const [itemsPagination, setItemsPagination] = useState({
     page: 1,
-    rowsPerPage: 10,
-    totalItems: 0
+    rowsPerPage: 10
   });
 
-  //notification
-  const { showNotification } = useNotification();
+  const dictionariesKey = [
+    'dictionaries',
+    {
+      page: pagination.page - 1,
+      size: pagination.rowsPerPage,
+      ...(searchTerm && { searchTerm })
+    }
+  ];
+
+  const {
+    data: dictionariesResponse,
+    error: dictionariesError,
+    isLoading: loading
+  } = useSWR(dictionariesKey, ([key, params]) => dictionariesApi.getAllDicts(params));
+
+  const data = dictionariesResponse?.data?.data?.content || [];
+  const totalItems = dictionariesResponse?.data?.data?.totalElements || 0;
+
+  const itemsKey = selectedDict
+    ? [
+        'dictionary-items',
+        {
+          dictType: selectedDict.dictType,
+          page: itemsPagination.page - 1,
+          size: itemsPagination.rowsPerPage,
+          ...(itemSearchTerm && { searchTerm: itemSearchTerm })
+        }
+      ]
+    : null;
+
+  const {
+    data: itemsResponse,
+    error: itemsError,
+    isLoading: itemsLoading
+  } = useSWR(itemsKey, ([key, params]) => dictionarieItemsApi.getAllDictItems(params));
+
+  const itemsData = itemsResponse?.data?.data?.content || [];
+  const itemsTotalItems = itemsResponse?.data?.data?.totalElements || 0;
 
   // Columns definition for dictionaries
   const dictionaryColumns = [
@@ -88,159 +117,59 @@ const DictionaryPage = () => {
     }
   ];
 
-  //check response code
-  const isSuccessCode = (code) => code >= 200 && code < 300;
-
-  // Dictionary API calls
-  const fetchDictionaries = useCallback(async (params) => {
-    setLoading(true);
-    try {
-      const response = await dictionariesApi.getAllDicts(params);
-      if (response.data.success) {
-        setData(response.data.data.content);
-        setPagination((prev) => ({
-          ...prev,
-          totalItems: response.data.data.totalElements
-        }));
-      }
-    } catch (err) {
-      console.log('Lỗi khi gọi API dictionaries:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Dictionary Items API calls
-  const fetchDictionaryItems = useCallback(async (dictType, params = {}) => {
-    if (!dictType) return;
-
-    setItemsLoading(true);
-    try {
-      const response = await dictionarieItemsApi.getAllDictItems({
-        ...params,
-        dictType: dictType
-      });
-      if (response.data.success) {
-        setItemsData(response.data.data.content);
-        setItemsPagination((prev) => ({
-          ...prev,
-          totalItems: response.data.data.totalElements
-        }));
-      }
-    } catch (err) {
-      console.log('Lỗi khi gọi API dictionary items:', err);
-    } finally {
-      setItemsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchDictionaries();
-  }, []);
-
   // Dictionary handlers
-  const applyDictionaryFilters = useCallback(
-    async (searchTerm) => {
-      setLoading(true);
-      const reqBody = {
-        page: 0,
-        size: pagination.rowsPerPage
-      };
+  const handleDictionarySearch = useCallback((term) => {
+    setSearchTerm(term);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  }, []);
 
-      if (searchTerm) reqBody.searchTerm = searchTerm;
-      setPagination((prev) => ({ ...prev, page: 1 }));
-      await fetchDictionaries(reqBody);
-    },
-    [pagination.rowsPerPage, fetchDictionaries]
-  );
-
-  const handleDictionarySearch = useCallback(
-    (term) => {
-      setSearchTerm(term);
-      applyDictionaryFilters(term);
-    },
-    [applyDictionaryFilters]
-  );
-
-  const handleDictionaryCreate = useCallback(
-    async (newData) => {
-      try {
-        const { id, ...dataToCreate } = newData;
-        const response = await dictionariesApi.createDict(dataToCreate);
-        if (response.success || isSuccessCode(response.status)) {
-          showNotification('Thêm từ điển thành công', 'success');
-          await fetchDictionaries();
-        }
-      } catch (error) {
-        console.error('Có lỗi khi tạo từ điển:', error);
-        showNotification('Có lỗi xảy ra khi tạo từ điển!', 'error');
+  const handleDictionaryCreate = useCallback(async (newData) => {
+    try {
+      const { id, ...dataToCreate } = newData;
+      const response = await dictionariesApi.createDict(dataToCreate);
+      if (response.success || isSuccessCode(response.status)) {
+        mutate((key) => Array.isArray(key) && key[0] === 'dictionaries');
       }
-    },
-    [fetchDictionaries, showNotification, isSuccessCode]
-  );
+    } catch (error) {
+      console.error('Có lỗi khi tạo từ điển:', error);
+    }
+  }, []);
 
-  const handleDictionaryEdit = useCallback(
-    async (editedData) => {
-      try {
-        const response = await dictionariesApi.updateDict(editedData);
-        if (response.success || isSuccessCode(response.status)) {
-          showNotification('Cập nhật từ điển thành công', 'success');
-          await fetchDictionaries();
-        }
-      } catch (error) {
-        console.error('Có lỗi khi cập nhật từ điển:', error);
-        showNotification('Có lỗi xảy ra khi cập nhật từ điển!', 'error');
+  const handleDictionaryEdit = useCallback(async (editedData) => {
+    try {
+      const response = await dictionariesApi.updateDict(editedData);
+      if (response.success || isSuccessCode(response.status)) {
+        mutate((key) => Array.isArray(key) && key[0] === 'dictionaries');
       }
-    },
-    [fetchDictionaries, showNotification, isSuccessCode]
-  );
+    } catch (error) {
+      console.error('Có lỗi khi cập nhật từ điển:', error);
+    }
+  }, []);
 
   const handleDictionaryDelete = useCallback(
     async (itemsToDelete) => {
       try {
         const response = await dictionariesApi.deleteDicts(itemsToDelete);
         if (response.success || isSuccessCode(response.status)) {
-          showNotification('Xóa từ điển thành công', 'success');
-          await fetchDictionaries();
-          // Reset selected dict and items if deleted
+          mutate((key) => Array.isArray(key) && key[0] === 'dictionaries');
+
+          // Reset selected dict if deleted
           if (selectedDict && itemsToDelete.includes(selectedDict.id)) {
             setSelectedDict(null);
-            setItemsData([]);
           }
         }
       } catch (error) {
         console.error('Có lỗi khi xóa từ điển:', error);
-        showNotification('Có lỗi xảy ra khi xóa từ điển!', 'error');
       }
     },
-    [fetchDictionaries, showNotification, isSuccessCode, selectedDict]
+    [selectedDict]
   );
 
   // Dictionary Items handlers
-  const applyItemFilters = useCallback(
-    async (searchTerm) => {
-      if (!selectedDict) return;
-      setItemsLoading(true);
-      const reqBody = {
-        page: 0,
-        size: itemsPagination.rowsPerPage
-      };
-
-      if (searchTerm) reqBody.searchTerm = searchTerm;
-      setItemsPagination((prev) => ({ ...prev, page: 1 }));
-
-      await fetchDictionaryItems(selectedDict.dictType, reqBody);
-    },
-    [selectedDict, itemsPagination.rowsPerPage, fetchDictionaryItems]
-  );
-
-  const handleItemSearch = useCallback(
-    (term) => {
-      setItemSearchTerm(term);
-      applyItemFilters(term);
-    },
-    [applyItemFilters]
-  );
+  const handleItemSearch = useCallback((term) => {
+    setItemSearchTerm(term);
+    setItemsPagination((prev) => ({ ...prev, page: 1 }));
+  }, []);
 
   const handleItemCreate = useCallback(
     async (newData) => {
@@ -252,59 +181,43 @@ const DictionaryPage = () => {
         };
         const response = await dictionarieItemsApi.createDictItem(dataWithDictType);
         if (response.success || isSuccessCode(response.status)) {
-          showNotification('Thêm mục từ điển thành công', 'success');
-          await fetchDictionaryItems(selectedDict.dictType);
+          mutate((key) => Array.isArray(key) && key[0] === 'dictionary-items');
         }
       } catch (error) {
         console.error('Có lỗi khi tạo mục từ điển:', error);
-        showNotification('Có lỗi xảy ra khi tạo mục từ điển!', 'error');
       }
     },
-    [selectedDict, fetchDictionaryItems, showNotification, isSuccessCode]
+    [selectedDict]
   );
 
-  const handleItemEdit = useCallback(
-    async (editedData) => {
-      try {
-        const response = await dictionarieItemsApi.updateDictItem(editedData);
-        if (response.success || isSuccessCode(response.status)) {
-          showNotification('Cập nhật mục từ điển thành công', 'success');
-          await fetchDictionaryItems(selectedDict.dictType);
-        }
-      } catch (error) {
-        console.error('Có lỗi khi cập nhật mục từ điển:', error);
-        showNotification('Có lỗi xảy ra khi cập nhật mục từ điển!', 'error');
+  const handleItemEdit = useCallback(async (editedData) => {
+    try {
+      const response = await dictionarieItemsApi.updateDictItem(editedData);
+      if (response.success || isSuccessCode(response.status)) {
+        mutate((key) => Array.isArray(key) && key[0] === 'dictionary-items');
       }
-    },
-    [selectedDict, fetchDictionaryItems, showNotification, isSuccessCode]
-  );
+    } catch (error) {
+      console.error('Có lỗi khi cập nhật mục từ điển:', error);
+    }
+  }, []);
 
-  const handleItemDelete = useCallback(
-    async (itemsToDelete) => {
-      try {
-        const response = await dictionarieItemsApi.deleteDictItems(itemsToDelete);
-        if (response.success || isSuccessCode(response.status)) {
-          showNotification('Xóa mục từ điển thành công', 'success');
-          await fetchDictionaryItems(selectedDict.dictType);
-        }
-      } catch (error) {
-        console.error('Có lỗi khi xóa mục từ điển:', error);
-        showNotification('Có lỗi xảy ra khi xóa mục từ điển!', 'error');
+  const handleItemDelete = useCallback(async (itemsToDelete) => {
+    try {
+      const response = await dictionarieItemsApi.deleteDictItems(itemsToDelete);
+      if (response.success || isSuccessCode(response.status)) {
+        mutate((key) => Array.isArray(key) && key[0] === 'dictionary-items');
       }
-    },
-    [selectedDict, fetchDictionaryItems, showNotification, isSuccessCode]
-  );
+    } catch (error) {
+      console.error('Có lỗi khi xóa mục từ điển:', error);
+    }
+  }, []);
 
   // Handle row click to show dictionary items
-  const handleDictionaryRowClick = useCallback(
-    (rowData) => {
-      setSelectedDict(rowData);
-      setItemsData([]);
-      setItemSearchTerm('');
-      fetchDictionaryItems(rowData.dictType);
-    },
-    [fetchDictionaryItems]
-  );
+  const handleDictionaryRowClick = useCallback((rowData) => {
+    setSelectedDict(rowData);
+    setItemSearchTerm('');
+    setItemsPagination({ page: 1, rowsPerPage: 10 });
+  }, []);
 
   return (
     <Box sx={{ backgroundColor: '#f5f5f5' }}>
@@ -335,6 +248,8 @@ const DictionaryPage = () => {
               loading={loading}
               enableSearch
               enablePagination
+              pagination={{ ...pagination, totalItems }}
+              onPaginationChange={setPagination}
             />
           </Paper>
         </Grid>
@@ -379,6 +294,8 @@ const DictionaryPage = () => {
                 loading={itemsLoading}
                 enableSearch
                 enablePagination
+                pagination={{ ...itemsPagination, totalItems: itemsTotalItems }}
+                onPaginationChange={setItemsPagination}
               />
             ) : (
               <Box sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>

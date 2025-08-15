@@ -13,19 +13,34 @@ import RoleFormAction from './RoleFormAction';
 //notification
 import { useNotification } from '../../../contexts/NotificationContext';
 
+import useSWR, { mutate } from 'swr';
+import { isSuccessCode } from '../../../app/utils/constants';
+
 const RoleManagementPage = () => {
   // State
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [pagination, setPagination] = useState({
     page: 1,
-    rowsPerPage: 10,
-    totalItems: 0
+    rowsPerPage: 10
   });
+  const [filters, setFilters] = useState({});
 
-  //notification
-  const { showNotification, hideNotification } = useNotification();
+  const rolesParams = {
+    page: pagination.page - 1,
+    size: pagination.rowsPerPage,
+    ...(searchTerm && { searchTerm }),
+    ...(filters.sortBy && { sortBy: filters.sortBy }),
+    ...(filters.sortDirection && { sortDirection: filters.sortDirection })
+  };
+
+  const {
+    data: rolesResponse,
+    error: rolesError,
+    isLoading: loading
+  } = useSWR(['roles', rolesParams], ([key, params]) => rolesApi.getAllRoles(params));
+
+  const data = rolesResponse?.data?.data?.content || [];
+  const totalItems = rolesResponse?.data?.data?.totalElements || 0;
 
   // Columns definition
   const columns = [
@@ -47,12 +62,6 @@ const RoleManagementPage = () => {
       minWidth: 150,
       sortable: true
     },
-    // {
-    //   id: 'updateBy',
-    //   label: 'Cập nhật bởi',
-    //   minWidth: 150,
-    //   sortable: true
-    // },
     {
       id: 'createTime',
       label: 'Thời gian tạo',
@@ -67,106 +76,80 @@ const RoleManagementPage = () => {
     }
   ];
 
-  //check response code
-  const isSuccessCode = (code) => code >= 200 && code < 300;
+  // const fetchData = useCallback(async (params) => {
+  //   setLoading(true);
+  //   try {
+  //     const response = await rolesApi.getAllRoles(params);
+  //     setData(response.data.data.content);
+  //   } catch (err) {
+  //     console.log('Lỗi khi gọi API:', err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // });
 
-  const fetchData = useCallback(async (params) => {
-    setLoading(true);
-    try {
-      const response = await rolesApi.getAllRoles(params);
-      setData(response.data.data.content);
-    } catch (err) {
-      console.log('Lỗi khi gọi API:', err);
-    } finally {
-      setLoading(false);
-    }
-  });
+  // useEffect(() => {
+  //   fetchData();
+  // }, []);
 
-  useEffect(() => {
-    fetchData();
+  const handleFilter = useCallback((newFilters) => {
+    setFilters(newFilters);
+    setPagination((prev) => ({ ...prev, page: 1 }));
   }, []);
-
-  const applyFilters = useCallback(
-    async (searchTerm) => {
-      setLoading(true);
-      const reqBody = {
-        page: 1,
-        size: pagination.rowsPerPage
-      };
-
-      if (searchTerm) reqBody.searchTerm = searchTerm;
-      setPagination((prev) => ({ ...prev, page: 1 }));
-      await fetchData(reqBody);
-      setLoading(false);
-    },
-    [data]
-  );
 
   const handleSearch = useCallback((term) => {
     setSearchTerm(term);
-    applyFilters(term);
+    setPagination((prev) => ({ ...prev, page: 1 }));
   }, []);
 
   // Handlers
-  const handleAssignRoleToUsers = useCallback(
-    async (reqBody) => {
-      try {
-        await rolesApi.assignRoleToUsers(reqBody);
+  const handleAssignRoleToUsers = useCallback(async (reqBody) => {
+    try {
+      const response = await rolesApi.assignRoleToUsers(reqBody);
 
-        showNotification('Gán chức vụ thành công', 'success');
-        await fetchData();
-      } catch (error) {
-        console.error('Có lỗi khi gán chức vụ:', error);
-        showNotification('Có lỗi xảy ra!', 'error');
+      if (response.success || isSuccessCode(response.status)) {
+        mutate((key) => Array.isArray(key) && key[0] === 'roles');
       }
-    },
-    [fetchData, showNotification, isSuccessCode]
-  );
+    } catch (error) {
+      console.error('Có lỗi khi gán chức vụ:', error);
+    }
+  }, []);
 
-  const handleCreate = useCallback(
-    async (newData) => {
-      try {
-        await rolesApi.createRole(newData);
+  const handleCreate = useCallback(async (newData) => {
+    try {
+      const response = await rolesApi.createRole(newData);
 
-        showNotification('Thêm chức vụ thành công', 'success');
-        await fetchData();
-      } catch (error) {
-        console.error('Có lỗi khi tạo chức vụ:', error);
-        showNotification('Có lỗi xảy ra!', 'error');
+      if (response.success || isSuccessCode(response.status)) {
+        mutate((key) => Array.isArray(key) && key[0] === 'roles');
       }
-    },
-    [fetchData, showNotification, isSuccessCode]
-  );
+    } catch (error) {
+      console.error('Có lỗi khi tạo chức vụ:', error);
+    }
+  }, []);
 
-  const handleEdit = useCallback(
-    async (editedData) => {
-      try {
-        await rolesApi.updateRole(editedData);
+  const handleEdit = useCallback(async (editedData) => {
+    try {
+      const response = await rolesApi.updateRole(editedData);
 
-        showNotification('Sửa chức vụ thành công', 'success');
-        await fetchData();
-      } catch (error) {
-        console.error('Có lỗi khi cập chức vụ:', error);
-        showNotification('Có lỗi xảy ra!', 'error');
+      if (response.success || isSuccessCode(response.status)) {
+        mutate((key) => Array.isArray(key) && key[0] === 'roles');
       }
-    },
-    [fetchData, showNotification, isSuccessCode]
-  );
+    } catch (error) {
+      console.error('Có lỗi khi cập chức vụ:', error);
+    }
+  }, []);
 
-  const handleDelete = useCallback(
-    async (itemToDelete) => {
-      try {
-        await rolesApi.deleteRoles({ roleIds: itemToDelete });
+  const handleDelete = useCallback(async (itemToDelete) => {
+    try {
+      const response = await rolesApi.deleteRoles({ roleIds: itemToDelete });
 
-        showNotification('Xóa chức vụ thành công', 'success');
-        await fetchData();
-      } catch (error) {
-        console.error('Có lỗi khi xóa chức vụ:', error);
-        showNotification('Có lỗi xảy ra!', 'error');
+      if (response.success || isSuccessCode(response.status)) {
+        mutate((key) => Array.isArray(key) && key[0] === 'roles');
       }
-    },
-    [fetchData, showNotification, isSuccessCode]
-  );
+    } catch (error) {
+      console.error('Có lỗi khi xóa chức vụ:', error);
+    }
+  }, []);
 
   // Render component
   return (
@@ -195,6 +178,7 @@ const RoleManagementPage = () => {
       viewComponent={(props) => <RoleFormAction {...props} title="Xem chi tiết chức vụ" isAssignRole={false} isView={true} />}
       collapsible={false}
       loading={loading}
+      pagination={{ ...pagination, totalItems }}
       searchPlaceholder="Tìm kiếm theo mã chức vụ, tên chức vụ,..."
       enableSearch={true}
       enableFilter={false}
