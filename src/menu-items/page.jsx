@@ -1,5 +1,5 @@
 // assets
-import { LoginOutlined, ProfileOutlined, UserOutlined, TeamOutlined, ReadOutlined } from '@ant-design/icons';
+import { LoginOutlined, ProfileOutlined, UserOutlined, TeamOutlined, ReadOutlined, ScheduleOutlined } from '@ant-design/icons';
 
 // icons
 const icons = {
@@ -7,7 +7,8 @@ const icons = {
   ProfileOutlined,
   UserOutlined,
   TeamOutlined,
-  ReadOutlined
+  ReadOutlined,
+  ScheduleOutlined
 };
 
 // ==============================|| MENU ITEMS - EXTRA PAGES ||============================== //
@@ -73,6 +74,13 @@ const pages = {
       type: 'item',
       url: '/dictionary',
       icon: icons.ReadOutlined
+    },
+    {
+      id: 'timekeeping',
+      title: 'Quản lý chấm công',
+      type: 'item',
+      url: '/timekeeping',
+      icon: icons.ScheduleOutlined
     }
   ]
 };
