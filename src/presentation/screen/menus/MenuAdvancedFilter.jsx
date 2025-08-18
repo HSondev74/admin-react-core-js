@@ -1,15 +1,6 @@
 import AdvancedFilter from '../../components/UI/AdvancedFilter';
 import CustomSelectField from '../../components/UI/CustomSelectField';
-import {
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  OutlinedInput,
-  Checkbox,
-  ListItemText,
-  Grid
-} from '@mui/material';
+import { Grid } from '@mui/material';
 
 const MenuAdvancedFilter = ({ availableRoles, onFilter }) => {
   return (
@@ -53,31 +44,20 @@ const MenuAdvancedFilter = ({ availableRoles, onFilter }) => {
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Quyền</InputLabel>
-              <Select
-                multiple
-                name="roles"
-                value={filters.roles}
-                onChange={(e) => handleChange({ target: { name: 'roles', value: e.target.value } })}
-                input={<OutlinedInput label="Quyền" />}
-                renderValue={(selected) =>
-                  selected
-                    .map((roleId) => {
-                      const role = availableRoles.find((r) => r.id === roleId);
-                      return role?.name;
-                    })
-                    .join(', ')
-                }
-              >
-                {availableRoles.map((role) => (
-                  <MenuItem key={role.id} value={role.id}>
-                    <Checkbox checked={filters.roles.includes(role.id)} />
-                    <ListItemText primary={role.name} />
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <CustomSelectField
+              label="Quyền"
+              name="roles"
+              value={filters.roles}
+              onChange={(e) => handleChange({ target: { name: 'roles', value: e.target.value } })}
+              options={[
+                { label: 'Tất cả', value: '' },
+                ...availableRoles.map((role) => ({
+                  label: role.name,
+                  value: role.id
+                }))
+              ]}
+              multiple
+            />
           </Grid>
         </>
       )}

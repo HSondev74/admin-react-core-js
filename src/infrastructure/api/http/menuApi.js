@@ -35,6 +35,16 @@ class MenuApi extends BaseApi {
     }
   }
 
+  async getMenuById(id) {
+    try {
+      const response = await this.get(`/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Menu API error:', error);
+      throw error;
+    }
+  }
+
   // Get roles to assign to menu items
   async getRoles() {
     try {
@@ -68,6 +78,20 @@ class MenuApi extends BaseApi {
   async deleteRoleFromMenu(menuId, roleId) {
     try {
       await this.delete(`/${menuId}/roles/${roleId}`);
+    } catch (error) {
+      console.error('Menu API error:', error);
+      throw error;
+    }
+  }
+
+  async updateSortOrder(sourceId, targetId, direction, steps) {
+    try {
+      await this.put('/sort-order', {
+        sourceId,
+        targetId,
+        direction,
+        steps
+      });
     } catch (error) {
       console.error('Menu API error:', error);
       throw error;

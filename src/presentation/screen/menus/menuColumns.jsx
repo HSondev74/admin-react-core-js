@@ -1,22 +1,45 @@
-import { Box, Typography, Chip, Tooltip } from '@mui/material';
-import { MoreOutlined } from '@ant-design/icons';
+import { Box, Typography, IconButton } from '@mui/material';
+import { ArrowUpward, ArrowDownward } from '@mui/icons-material';
+import { DownOutlined, RightOutlined } from '@ant-design/icons';
 
-export const getMenuColumns = (availableRoles) => [
+export const getMenuColumns = (expandedItems, onToggleExpand, onSortOrder) => [
   {
     id: 'name',
-    label: 'Menu Name',
-    minWidth: 200,
+    label: 'Tên danh sách',
+    minWidth: 150,
+    align: 'left',
+    padding: 3.5,
     render: (value, row) => {
       const item = row.item;
       const hasChildren = row.children && row.children.length > 0;
+      const isExpanded = expandedItems.includes(item.id);
+      const indentLevel = row.level || 0;
+
       return (
-        <Box sx={{ display: 'flex', alignItems: 'center', pl: row.level * 2 }}>
-          {row.level > 0 && <Box sx={{ mr: 1, color: 'text.secondary' }}>└─</Box>}
+        <Box sx={{ display: 'flex', alignItems: 'center', pl: indentLevel * 2 }}>
+          {hasChildren ? (
+            <IconButton
+              size="small"
+              onClick={() => onToggleExpand(item.id)}
+              sx={{
+                mr: 1,
+                p: 0.5,
+                '&:hover': {
+                  backgroundColor: 'transparent'
+                }
+              }}
+              disableRipple
+            >
+              {isExpanded ? <DownOutlined style={{ fontSize: '15px' }} /> : <RightOutlined style={{ fontSize: '15px' }} />}
+            </IconButton>
+          ) : (
+            <Box sx={{ width: 24, mr: 1 }} />
+          )}
           <Typography
             variant="body1"
             sx={{
-              fontWeight: row.level === 0 ? 'bold' : 'normal',
-              color: row.level === 0 ? 'primary.main' : 'text.primary'
+              fontWeight: indentLevel === 0 ? 'bold' : 'normal',
+              color: indentLevel === 0 ? 'primary.main' : 'text.primary'
             }}
           >
             {item.name}
@@ -32,8 +55,9 @@ export const getMenuColumns = (availableRoles) => [
   },
   {
     id: 'path',
-    label: 'Path',
-    minWidth: 150,
+    label: 'Đường dẫn',
+    minWidth: 100,
+    align: 'left',
     render: (value, row) => (
       <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
         {row.item.path || row.item.url}
@@ -41,104 +65,43 @@ export const getMenuColumns = (availableRoles) => [
     )
   },
   {
-    id: 'sortOrder',
-    label: 'Order',
-    minWidth: 80,
-    render: (value, row) => row.item.sortOrder || 0
-  },
-  {
     id: 'type',
-    label: 'Menu Type',
+    label: 'Loại',
     minWidth: 100,
-    render: (value, row) => {
+    align: 'center',
+    render: (vaue, row) => {
       const menuType = row.item.menuType || 'Unknown';
       return (
-        <Chip 
-          label={menuType} 
-          size="small" 
-          color={menuType === 'Parent' ? 'primary' : menuType === 'Child' ? 'secondary' : 'default'} 
-        />
+        <Typography variant="body2" sx={{ fontSize: '0.9rem' }}>
+          {menuType === 'MENU' ? 'Danh sách' : 'Nút'}
+        </Typography>
       );
     }
   },
   {
-    id: 'roles',
-    label: 'Roles',
-    minWidth: 220,
-    render: (value, row) => {
-      const menuRoles = row.item.roles || [];
-      const maxVisible = 2;
-
-      if (menuRoles.length === 0) {
-        return (
-          <Typography variant="body2" sx={{ color: 'text.disabled', fontSize: '0.8rem' }}>
-            Chưa gán quyền
-          </Typography>
-        );
-      }
-
-      const visibleRoles = menuRoles.slice(0, maxVisible);
-      const hiddenRoles = menuRoles.slice(maxVisible);
-      const allRoleNames = menuRoles
-        .map((roleId) => {
-          const role = availableRoles.find((r) => r.id === roleId);
-          return role?.name || 'Unknown';
-        })
-        .join(', ');
-
-      return (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, maxWidth: 200 }}>
-          {visibleRoles.map((roleId) => {
-            const role = availableRoles.find((r) => r.id === roleId);
-            return role ? (
-              <Chip
-                key={roleId}
-                label={role.name}
-                size="small"
-                variant="outlined"
-                sx={{
-                  fontSize: '0.7rem',
-                  maxWidth: '80px',
-                  '& .MuiChip-label': {
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis'
-                  }
-                }}
-              />
-            ) : null;
-          })}
-
-          {hiddenRoles.length > 0 && (
-            <Tooltip
-              title={
-                <Box>
-                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                    Tất cả quyền:
-                  </Typography>
-                  <Typography variant="body2">{allRoleNames}</Typography>
-                </Box>
-              }
-              arrow
-              placement="top"
-            >
-              <Chip
-                icon={<MoreOutlined style={{ fontSize: '12px' }} />}
-                label={`+${hiddenRoles.length}`}
-                size="small"
-                color="primary"
-                variant="filled"
-                sx={{
-                  fontSize: '0.7rem',
-                  cursor: 'pointer',
-                  '&:hover': {
-                    backgroundColor: 'primary.dark'
-                  }
-                }}
-              />
-            </Tooltip>
-          )}
-        </Box>
-      );
-    }
+    id: 'sortOrder',
+    label: 'Sắp xếp',
+    minWidth: 80,
+    align: 'center',
+    render: (value, row) => (
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+        <IconButton 
+          size="small" 
+          sx={{ p: 0.25 }}
+          onClick={() => onSortOrder && onSortOrder(row, 'UP')}
+          disabled={!onSortOrder}
+        >
+          <ArrowUpward sx={{ fontSize: 16 }} />
+        </IconButton>
+        <IconButton 
+          size="small" 
+          sx={{ p: 0.25 }}
+          onClick={() => onSortOrder && onSortOrder(row, 'DOWN')}
+          disabled={!onSortOrder}
+        >
+          <ArrowDownward sx={{ fontSize: 16 }} />
+        </IconButton>
+      </Box>
+    )
   }
 ];

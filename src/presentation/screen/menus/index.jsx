@@ -2,24 +2,28 @@ import { useState, useEffect } from 'react';
 import { Box, Typography } from '@mui/material';
 // Components
 import CustomDataPage from '../../components/CustomTable/CustomDataPage';
-import ModalWrapper from '../../components/CustomTable/ModalWrapper';
 import MenuFormAction from './MenuFormAction';
 import MenuAdvancedFilter from './MenuAdvancedFilter';
 // Utils and handlers
 import { getMenuColumns } from './menuColumns';
-import { createMenuHandlers } from './menuHandlers';
-// Styles
-import { modalWrapperStyles } from '../../assets/styles/pageStyles';
+import { listMenus as listMenusUtil } from './menuUtils';
 // Api
 import menuApi from '../../../infrastructure/api/http/menuApi';
 
-// List menu tree for table display
-const listMenus = (menus, level = 0) => {
+// List menu tree for table display with expand/collapse support
+const listMenus = (menus, level = 0, expandedItems = []) => {
   const result = [];
-  menus.forEach((menu) => {
+  // Sort menus by sortOrder in ascending order
+  const sortedMenus = [...menus].sort((a, b) => {
+    const sortOrderA = a.item?.sortOrder || 0;
+    const sortOrderB = b.item?.sortOrder || 0;
+    return sortOrderA - sortOrderB;
+  });
+
+  sortedMenus.forEach((menu) => {
     result.push({ ...menu, level, id: menu.item?.id });
-    if (menu.children && menu.children.length > 0) {
-      result.push(...listMenus(menu.children, level + 1));
+    if (menu.children && menu.children.length > 0 && expandedItems.includes(menu.item?.id)) {
+      result.push(...listMenus(menu.children, level + 1, expandedItems));
     }
   });
   return result;
@@ -35,14 +39,13 @@ export default function MenuManagement() {
   const [activeFilters, setActiveFilters] = useState({});
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [childFormOpen, setChildFormOpen] = useState(false);
-  const [parentMenuItem, setParentMenuItem] = useState(null);
+  const [expandedItems, setExpandedItems] = useState([]);
 
-  // Function to refresh menu data
-  const refreshMenuData = async () => {
+  // Load menu tree data
+  const loadMenus = async () => {
     try {
+      setLoading(true);
       const response = await menuApi.getAllMenuTree();
-      console.log('getAllMenuTree response:', response);
       let menuData = [];
       if (response && Array.isArray(response.data)) {
         menuData = response.data;
@@ -51,51 +54,25 @@ export default function MenuManagement() {
       }
       setMenus(menuData);
       setFilteredMenus(menuData);
+      setError(null);
     } catch (err) {
-      console.error('Error refreshing menus:', err);
+      console.error('Error loading menus:', err);
+      setError(err.message);
+      setMenus([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   // Expose refresh function globally for MenuFormAction
   useEffect(() => {
-    window.refreshMenuData = refreshMenuData;
+    window.refreshMenuData = loadMenus;
     return () => {
       delete window.refreshMenuData;
     };
   }, []);
 
-  console.log('Menus:', menus);
-
-  // Load menu tree data
   useEffect(() => {
-    const loadMenus = async () => {
-      try {
-        setLoading(true);
-        const response = await menuApi.getAllMenuTree();
-        console.log('getAllMenuTree response:', response);
-
-        // Get the menu data from the response
-        let menuData = [];
-        if (response && Array.isArray(response.data)) {
-          menuData = response.data;
-        } else if (response && Array.isArray(response)) {
-          menuData = response;
-        } else {
-          console.warn('Unexpected response structure:', response);
-        }
-
-        setMenus(menuData);
-        setFilteredMenus(menuData);
-        setError(null);
-      } catch (err) {
-        console.error('Error loading menus:', err);
-        setError(err.message);
-        setMenus([]); // Ensure menus is always an array
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadMenus();
   }, []);
 
@@ -119,80 +96,93 @@ export default function MenuManagement() {
     try {
       const id = Array.isArray(ids) ? ids[0] : ids;
       await menuApi.deleteMenuItem(id);
-
-      const deleteRecursive = (menuList) => {
-        return menuList.filter((menu) => {
-          const item = menu.item;
-          const menuId = item.id;
-          if (menuId === id) return false;
-          if (menu.children) {
-            menu.children = deleteRecursive(menu.children);
-          }
-          return true;
-        });
-      };
-
-      const updatedMenus = deleteRecursive(menus);
-      setMenus(updatedMenus);
-      setFilteredMenus(updatedMenus);
+      await loadMenus(); // Refresh data after delete
     } catch (error) {
       console.error('Error deleting menu:', error);
     }
   };
 
-  // Add child menu handler
-  const handleAddChild = (parentMenu) => {
-    console.log('Adding child to:', parentMenu.item.name);
-    setParentMenuItem(parentMenu);
-    setChildFormOpen(true);
-  };
-
-  const handleCloseChildForm = () => {
-    setChildFormOpen(false);
-    setParentMenuItem(null);
-  };
-
-  // Custom actions for menu
-  const customActions = [
-    {
-      label: 'Thêm con',
-      icon: 'IoMdAdd',
-      color: 'success',
-      onClick: handleAddChild
-    }
-  ];
-
-  // Create handlers
-  const {
-    handleDelete: handleDeleteFromHandlers,
-    handleSearch: handleSearchFromHandlers,
-    handleAdvancedFilter,
-    handleResetFilter,
-    handleChangePage,
-    handleChangeRowsPerPage,
-    getPaginatedData
-  } = createMenuHandlers(
-    menus,
-    setMenus,
-    filteredMenus,
-    setFilteredMenus,
-    searchTerm,
-    activeFilters,
-    setActiveFilters,
-    page,
-    setPage,
-    rowsPerPage,
-    setRowsPerPage
-  );
-
-  // Update search term state
+  // Search functionality
   const handleSearch = (searchValue) => {
     setSearchTerm(searchValue);
-    handleSearchFromHandlers(searchValue);
+    if (!searchValue.trim()) {
+      setFilteredMenus(menus);
+      return;
+    }
+
+    const filterMenus = (menuList) => {
+      const filtered = [];
+      menuList.forEach((menu) => {
+        const item = menu.item;
+        const matchesSearch =
+          item.name?.toLowerCase().includes(searchValue.toLowerCase()) ||
+          item.path?.toLowerCase().includes(searchValue.toLowerCase()) ||
+          item.menuType?.toLowerCase().includes(searchValue.toLowerCase());
+
+        if (matchesSearch) {
+          filtered.push(menu);
+        } else if (menu.children && menu.children.length > 0) {
+          const filteredChildren = filterMenus(menu.children);
+          if (filteredChildren.length > 0) {
+            filtered.push({ ...menu, children: filteredChildren });
+          }
+        }
+      });
+      return filtered;
+    };
+
+    setFilteredMenus(filterMenus(menus));
+  };
+
+  // Advanced filter functionality
+  const handleAdvancedFilter = (filters) => {
+    setActiveFilters(filters);
+    // Simple implementation - can be expanded if needed
+    setFilteredMenus(menus);
+  };
+
+  // Pagination handlers
+  const handleChangePage = (newPage) => setPage(newPage);
+  const handleChangeRowsPerPage = (newRowsPerPage) => {
+    setRowsPerPage(newRowsPerPage);
+    setPage(0);
+  };
+
+  // Handle expand/collapse
+  const handleToggleExpand = (itemId) => {
+    setExpandedItems((prev) => (prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId]));
+  };
+
+  // Handle sort order change
+  const handleSortOrder = async (sourceItem, direction) => {
+    try {
+      const flatMenus = listMenus(filteredMenus, 0, expandedItems);
+      const currentIndex = flatMenus.findIndex((menu) => menu.item.id === sourceItem.item.id);
+
+      let targetIndex;
+      if (direction === 'UP') {
+        targetIndex = currentIndex - 1;
+      } else {
+        targetIndex = currentIndex + 1;
+      }
+
+      if (targetIndex < 0 || targetIndex >= flatMenus.length) {
+        return; // Can't move beyond boundaries
+      }
+
+      const targetItem = flatMenus[targetIndex];
+
+      await menuApi.updateSortOrder(sourceItem.item.id, targetItem.item.id, direction, 1);
+
+      // Refresh data after successful update
+      await loadMenus();
+    } catch (error) {
+      console.error('Error updating sort order:', error);
+    }
   };
 
   // Get columns configuration
-  const columns = getMenuColumns(availableRoles);
+  const columns = getMenuColumns(expandedItems, handleToggleExpand, handleSortOrder);
 
   if (error) {
     return (
@@ -205,8 +195,8 @@ export default function MenuManagement() {
   return (
     <>
       <CustomDataPage
-        title="Menu Management"
-        data={getPaginatedData()}
+        title="Quản lý Danh sách"
+        data={listMenus(filteredMenus, 0, expandedItems)}
         columns={columns}
         loading={loading}
         showCheckbox={true}
@@ -222,24 +212,12 @@ export default function MenuManagement() {
           view: false,
           delete: true
         }}
-        pagination={{ page, rowsPerPage, totalItems: listMenus(filteredMenus).length }}
+        pagination={{ page, rowsPerPage, totalItems: listMenusUtil(filteredMenus).length }}
         onChangePage={handleChangePage}
         onChangeRowsPerPage={handleChangeRowsPerPage}
-        onDelete={handleDeleteFromHandlers}
-        onAddChild={handleAddChild}
+        onDelete={handleDelete}
         createComponent={({ item, onClose }) => <MenuFormAction item={item} onClose={onClose} />}
         editComponent={({ item, onClose }) => <MenuFormAction item={item} onClose={onClose} />}
-      />
-
-      {/* Modal for adding child menu */}
-      <ModalWrapper
-        open={childFormOpen}
-        title={`Thêm menu con cho: ${parentMenuItem?.item?.name || ''}`}
-        content={<MenuFormAction item={null} parentId={parentMenuItem?.item?.id} onClose={handleCloseChildForm} />}
-        maxWidth="sm"
-        showActions={false}
-        onClose={handleCloseChildForm}
-        styles={modalWrapperStyles}
       />
     </>
   );

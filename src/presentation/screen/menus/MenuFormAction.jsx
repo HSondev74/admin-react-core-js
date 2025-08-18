@@ -1,31 +1,37 @@
-import { useState, useEffect } from 'react';
-import {
-  Box,
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  OutlinedInput,
-  Checkbox,
-  ListItemText,
-  Typography,
-  DialogActions
-} from '@mui/material';
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useEffect, useState } from 'react';
 import menuApi from '../../../infrastructure/api/http/menuApi';
 
-const MenuFormAction = ({ item, parentId, onClose }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    path: '',
-    parentId: '',
-    menuType: '',
-    roleIds: [],
-    sortOrder: ''
-  });
+// Material UI components
+import Grid from '@mui/material/Grid';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import FormHelperText from '@mui/material/FormHelperText';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import OutlinedInput from '@mui/material/OutlinedInput';
+import Checkbox from '@mui/material/Checkbox';
+import ListItemText from '@mui/material/ListItemText';
+
+// third-party
+import * as Yup from 'yup';
+import { Formik, Form } from 'formik';
+
+// style
+import { formStyles, formViewStyles } from '../../assets/styles/formStyles';
+// components
+import TreeSelect from '../../components/TreeSelect/TreeSelect';
+import IconSelector from '../../components/IconSelector/IconSelector';
+
+const MenuFormAction = ({ item, parentId, onClose, onSubmit, title, isView }) => {
+  const [menu, setMenu] = useState(item);
   const [availableRoles, setAvailableRoles] = useState([]);
+  const [availableMenus, setAvailableMenus] = useState([]);
   const [loading, setLoading] = useState(false);
+  const isUpdate = !!item;
 
   const MenuProps = {
     PaperProps: {
@@ -36,174 +42,303 @@ const MenuFormAction = ({ item, parentId, onClose }) => {
     }
   };
 
-  // Load roles
-  useEffect(() => {
-    const loadRoles = async () => {
-      try {
-        const response = await menuApi.getRoles();
-        setAvailableRoles(response.data || []);
-      } catch (err) {
-        console.error('Error loading roles:', err);
-        setAvailableRoles([]);
+  // Find parentId from menu tree
+  const findParentId = (menus, targetId, parentId = null) => {
+    for (const menu of menus) {
+      if (menu.item?.id === targetId) {
+        return parentId;
       }
-    };
-    loadRoles();
-  }, []);
-
-  // Set form data when editing
-  useEffect(() => {
-    if (item) {
-      const menuItem = item.item || item;
-      setFormData({
-        name: menuItem.name || '',
-        path: menuItem.path || '',
-        parentId: item.parentId || parentId || '',
-        menuType: menuItem.menuType || '',
-        roleIds: menuItem.roles || [],
-        sortOrder: menuItem.sortOrder || ''
-      });
-    } else if (parentId) {
-      // Creating child menu
-      setFormData({
-        name: '',
-        path: '',
-        parentId: parentId,
-        menuType: '',
-        roleIds: [],
-        sortOrder: ''
-      });
+      if (menu.children && menu.children.length > 0) {
+        const found = findParentId(menu.children, targetId, menu.item?.id);
+        if (found !== null) return found;
+      }
     }
-  }, [item, parentId]);
+    return null;
+  };
 
-  const handleSave = async () => {
+  // get menu detail by id
+  const fetchMenuDetail = async () => {
     try {
-      setLoading(true);
-
-      if (item) {
-        // Edit existing menu
-        const menuId = item.item?.id || item.id;
-        await menuApi.updateMenuItem(formData, menuId);
-      } else {
-        // Add new menu item
-        await menuApi.addNewMenuItem(formData);
+      const response = await menuApi.getMenuById(item.id);
+      const menuData = response.data;
+      
+      // If parentId is not in response, find it from menu tree
+      if (!menuData.parentId && availableMenus.length > 0) {
+        const foundParentId = findParentId(availableMenus, item.id);
+        menuData.parentId = foundParentId;
       }
-
-      onClose();
-      // Trigger parent component to refresh data
-      if (window.refreshMenuData) {
-        window.refreshMenuData();
-      }
-    } catch (error) {
-      console.error('Error saving menu:', error);
-      alert('Error saving menu: ' + error.message);
+      
+      setMenu(menuData);
+    } catch (err) {
+      console.error('Lỗi khi gọi API:', err);
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    if (!item || !isView) {
+      return;
+    }
+    if (availableMenus.length > 0) {
+      fetchMenuDetail();
+    }
+  }, [item, isView, availableMenus]);
+
+  // Load roles and menus
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [rolesResponse, menusResponse] = await Promise.all([menuApi.getRoles(), menuApi.getAllMenuTree()]);
+        setAvailableRoles(rolesResponse.data || []);
+        setAvailableMenus(menusResponse.data || []);
+      } catch (err) {
+        console.error('Error loading data:', err);
+        setAvailableRoles([]);
+        setAvailableMenus([]);
+      }
+    };
+    loadData();
+  }, []);
+
+  // form handler
+  const handleSubmit = async (values, { setSubmitting, setFieldError }) => {
+    try {
+      setSubmitting(true);
+      
+      // Clean up data for API
+      const formData = { ...values };
+      
+      // Remove id for create operation
+      if (!isUpdate) {
+        delete formData.id;
+      }
+      
+      // Remove empty icon field
+      if (!formData.icon) {
+        delete formData.icon;
+      }
+      
+      // Debug: Log cleaned data
+      console.log('Cleaned form data:', formData);
+      
+      if (isUpdate) {
+        // Update existing menu
+        await menuApi.updateMenuItem(formData, formData.id);
+      } else {
+        // Create new menu
+        await menuApi.addNewMenuItem(formData);
+      }
+      
+      // Refresh menu data if available
+      if (window.refreshMenuData) {
+        await window.refreshMenuData();
+      }
+      
+      onClose();
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      setFieldError('name', 'Có lỗi xảy ra khi lưu dữ liệu');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const menuItem = menu?.item || menu;
+  const initialValues = {
+    id: menuItem?.id || 0,
+    name: menuItem?.name || '',
+    path: menuItem?.path || '',
+    parentId: menuItem?.parentId || menu?.parentId || parentId || null,
+    menuType: menuItem?.menuType || '',
+    roleIds: Array.isArray(menuItem?.roles) ? menuItem.roles : [],
+    sortOrder: menuItem?.sortOrder || 0,
+    icon: menuItem?.icon || ''
+  };
+
+  const validationSchema = !isView
+    ? Yup.object().shape({
+        name: Yup.string().max(255, 'Tên menu không được vượt quá 255 ký tự').required('Tên menu là bắt buộc'),
+        path: Yup.string().max(255, 'Đường dẫn không được vượt quá 255 ký tự'),
+        menuType: Yup.string().required('Loại menu là bắt buộc'),
+        sortOrder: Yup.number().min(0, 'Sắp xếp phải là số dương'),
+        icon: Yup.string().max(100, 'Icon không được vượt quá 100 ký tự')
+      })
+    : null;
+
   return (
-    <Box>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, p: 2 }}>
-        <TextField
-          label="Tên menu"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          fullWidth
-          required
-        />
+    <>
+      <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={handleSubmit} enableReinitialize>
+        {({ values, errors, touched, handleChange, handleBlur, setFieldValue, isSubmitting }) => (
+          <Form>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TreeSelect
+                  label="Danh sách cha"
+                  value={values.parentId}
+                  onChange={(selectedId) => setFieldValue('parentId', selectedId)}
+                  options={availableMenus}
+                  placeholder="Chọn danh sách cha..."
+                  searchPlaceholder="Tìm kiếm danh sách..."
+                  disabled={isView}
+                  error={Boolean(touched.parentId && errors.parentId)}
+                />
+                {touched.parentId && errors.parentId && (
+                  <FormHelperText error sx={{ mt: 0.5, fontSize: '0.75rem' }}>
+                    {errors.parentId}
+                  </FormHelperText>
+                )}
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Tên menu"
+                  name="name"
+                  value={values.name}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={Boolean(touched.name && errors.name)}
+                  InputLabelProps={{ style: formStyles.label }}
+                  inputProps={{ style: isView ? formViewStyles.inputReadOnly : formStyles.input, readOnly: isView }}
+                />
+                {touched.name && errors.name && (
+                  <FormHelperText error sx={{ mt: 0.5, fontSize: '0.75rem' }}>
+                    {errors.name}
+                  </FormHelperText>
+                )}
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Đường dẫn"
+                  name="path"
+                  value={values.path}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={Boolean(touched.path && errors.path)}
+                  InputLabelProps={{ style: formStyles.label }}
+                  inputProps={{ style: isView ? formViewStyles.inputReadOnly : formStyles.input, readOnly: isView }}
+                />
+                {touched.path && errors.path && (
+                  <FormHelperText error sx={{ mt: 0.5, fontSize: '0.75rem' }}>
+                    {errors.path}
+                  </FormHelperText>
+                )}
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl fullWidth error={Boolean(touched.menuType && errors.menuType)}>
+                  <InputLabel style={formStyles.label}>Loại menu</InputLabel>
+                  <Select
+                    name="menuType"
+                    value={values.menuType}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    input={<OutlinedInput label="Loại menu" />}
+                    inputProps={{ readOnly: isView }}
+                    style={isView ? formViewStyles.inputReadOnly : formStyles.input}
+                  >
+                    <MenuItem value="MENU">Danh sách</MenuItem>
+                    <MenuItem value="BUTTON">Nút</MenuItem>
+                  </Select>
+                  {touched.menuType && errors.menuType && (
+                    <FormHelperText error sx={{ mt: 0.5, fontSize: '0.75rem' }}>
+                      {errors.menuType}
+                    </FormHelperText>
+                  )}
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel style={formStyles.label}>Vai trò</InputLabel>
+                  <Select
+                    multiple
+                    name="roleIds"
+                    value={values.roleIds}
+                    onChange={(e) => setFieldValue('roleIds', e.target.value)}
+                    input={<OutlinedInput label="Vai trò" />}
+                    renderValue={(selected) => {
+                      if (!Array.isArray(selected)) return '';
+                      return selected
+                        .map((roleId) => {
+                          const role = availableRoles.find((r) => r.id === roleId);
+                          return role?.name;
+                        })
+                        .filter(Boolean)
+                        .join(', ');
+                    }}
+                    MenuProps={MenuProps}
+                    inputProps={{ readOnly: isView }}
+                    style={isView ? formViewStyles.inputReadOnly : formStyles.input}
+                  >
+                    {availableRoles.map((role) => {
+                      const isChecked = values.roleIds.includes(role.id);
+                      return (
+                        <MenuItem key={role.id} value={role.id}>
+                          <Checkbox checked={isChecked} />
+                          <ListItemText primary={role.name} />
+                        </MenuItem>
+                      );
+                    })}
+                  </Select>
+                </FormControl>
+              </Grid>
 
-        <TextField label="Đường dẫn" value={formData.path} onChange={(e) => setFormData({ ...formData, path: e.target.value })} fullWidth />
-
-        <FormControl fullWidth>
-          <InputLabel>Loại menu</InputLabel>
-          <Select
-            value={formData.menuType}
-            onChange={(e) => setFormData({ ...formData, menuType: e.target.value })}
-            input={<OutlinedInput label="Loại menu" />}
-          >
-            <MenuItem value="MENU">MENU</MenuItem>
-            <MenuItem value="BUTTON">BUTTON</MenuItem>
-          </Select>
-        </FormControl>
-
-        <FormControl fullWidth>
-          <InputLabel>Vai trò</InputLabel>
-          <Select
-            multiple
-            value={formData.roleIds}
-            onChange={(e) => setFormData({ ...formData, roleIds: e.target.value })}
-            input={<OutlinedInput label="Roles" />}
-            renderValue={(selected) =>
-              selected
-                .map((roleId) => {
-                  const role = availableRoles.find((r) => r.id === roleId);
-                  return role?.name;
-                })
-                .join(', ')
-            }
-            MenuProps={MenuProps}
-          >
-            {availableRoles.map((role) => {
-              const isChecked = formData.roleIds.includes(role.id);
-              return (
-                <MenuItem
-                  key={role.id}
-                  value={role.id}
-                  onClick={async (e) => {
-                    e.preventDefault();
-                    if (isChecked && item) {
-                      // If role is checked and we're editing, remove role from menu
-                      try {
-                        const menuId = item.item?.id || item.id;
-                        await menuApi.deleteRoleFromMenu(menuId, role.id);
-                        // Update local state
-                        setFormData((prev) => ({
-                          ...prev,
-                          roleIds: prev.roleIds.filter((id) => id !== role.id)
-                        }));
-                        // Refresh parent data silently (no loading state)
-                        setTimeout(() => {
-                          if (window.refreshMenuData) {
-                            window.refreshMenuData();
-                          }
-                        }, 100);
-                      } catch (error) {
-                        console.error('Error removing role:', error);
-                        alert('Error removing role: ' + error.message);
-                      }
-                    } else {
-                      // Normal add/remove behavior for unchecked roles
-                      const newRoleIds = isChecked ? formData.roleIds.filter((id) => id !== role.id) : [...formData.roleIds, role.id];
-                      setFormData({ ...formData, roleIds: newRoleIds });
-                    }
-                  }}
-                >
-                  <Checkbox checked={isChecked} />
-                  <ListItemText primary={role.name} />
-                </MenuItem>
-              );
-            })}
-          </Select>
-        </FormControl>
-
-        <TextField
-          label="Thứ tự"
-          type="number"
-          value={formData.sortOrder}
-          onChange={(e) => setFormData({ ...formData, sortOrder: e.target.value })}
-          fullWidth
-        />
-      </Box>
-
-      <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
-          Cancel
-        </Button>
-        <Button onClick={handleSave} variant="contained" disabled={loading || !formData.name.trim()}>
-          {loading ? 'Saving...' : 'Save'}
-        </Button>
-      </DialogActions>
-    </Box>
+              <Grid item xs={12}>
+                <IconSelector
+                  label="Icon"
+                  value={values.icon}
+                  onChange={(iconName) => setFieldValue('icon', iconName)}
+                  disabled={isView}
+                  error={Boolean(touched.icon && errors.icon)}
+                />
+                {touched.icon && errors.icon && (
+                  <FormHelperText error sx={{ mt: 0.5, fontSize: '0.75rem' }}>
+                    {errors.icon}
+                  </FormHelperText>
+                )}
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Sắp xếp"
+                  name="sortOrder"
+                  type="number"
+                  value={values.sortOrder}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={Boolean(touched.sortOrder && errors.sortOrder)}
+                  InputLabelProps={{ style: formStyles.label }}
+                  inputProps={{ style: isView ? formViewStyles.inputReadOnly : formStyles.input, readOnly: isView }}
+                />
+                {touched.sortOrder && errors.sortOrder && (
+                  <FormHelperText error sx={{ mt: 0.5, fontSize: '0.75rem' }}>
+                    {errors.sortOrder}
+                  </FormHelperText>
+                )}
+              </Grid>
+            </Grid>
+            {!isView && (
+              <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                <Button onClick={onClose} sx={formStyles.button}>
+                  Hủy
+                </Button>
+                <Button type="submit" variant="contained" color="primary" sx={formStyles.button} disabled={isSubmitting}>
+                  {isSubmitting ? 'Đang lưu...' : isUpdate ? 'Cập nhật' : 'Thêm mới'}
+                </Button>
+              </Box>
+            )}
+            {isView && (
+              <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                <Button onClick={onClose} sx={formStyles.button}>
+                  Đóng
+                </Button>
+              </Box>
+            )}
+          </Form>
+        )}
+      </Formik>
+    </>
   );
 };
 
