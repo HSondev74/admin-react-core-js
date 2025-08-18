@@ -23,14 +23,18 @@ const CustomDataPage = ({
   title,
   data = [],
   columns = [],
+  page = '',
   filterComponent,
   searchPlaceholder = 'Tìm kiếm...',
+  emptyMessage = '',
   onSearch,
   onView,
   onDelete,
-  permissions = { create: true, edit: true, view: true, delete: true },
+  onRowClick,
+  permissions = { assignRole: true, create: true, edit: true, view: true, delete: true },
   showCheckbox = true,
   actionType = 'icon-text', // 'icon', 'text', 'icon-text'
+  assignRoleComponent,
   createComponent,
   editComponent,
   viewComponent,
@@ -52,6 +56,7 @@ const CustomDataPage = ({
   const [openCreateForm, setOpenCreateForm] = useState(false);
   const [openEditForm, setOpenEditForm] = useState(false);
   const [openViewForm, setOpenViewForm] = useState(false);
+  const [openAssignRoleForm, setOpenAssignRoleForm] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
 
   const debouncedSearch = useCallback(
@@ -92,6 +97,11 @@ const CustomDataPage = ({
     setOpenEditForm(true);
   }, []);
 
+  const handleAssignRole = useCallback((item) => {
+    setCurrentItem(item);
+    setOpenAssignRoleForm(true);
+  }, []);
+
   const handleView = useCallback(
     (item) => {
       setCurrentItem(item);
@@ -129,8 +139,18 @@ const CustomDataPage = ({
     setOpenCreateForm(false);
     setOpenEditForm(false);
     setOpenViewForm(false);
+    setOpenAssignRoleForm(false);
     setCurrentItem(null);
   }, []);
+
+  const handleRowClick = useCallback(
+    (item) => {
+      if (onRowClick) {
+        onRowClick(item);
+      }
+    },
+    [onRowClick]
+  );
 
   return (
     <>
@@ -143,7 +163,6 @@ const CustomDataPage = ({
             </Button>
           )}
         </Stack>
-
         <MainCard
           sx={pageStyles.mainCard}
           title={
@@ -199,6 +218,7 @@ const CustomDataPage = ({
           columns={columns}
           loading={loading}
           showCheckbox={showCheckbox}
+          emptyMessage={emptyMessage}
           actionType={actionType}
           permissions={permissions}
           collapsible={collapsible}
@@ -207,9 +227,11 @@ const CustomDataPage = ({
           onChangePage={onChangePage}
           onChangeRowsPerPage={onChangeRowsPerPage}
           onSelectionChange={handleSelectionChange}
+          onAssignRoleToUsers={handleAssignRole}
           onEdit={handleEdit}
           onView={handleView}
           onDelete={handleDeleteConfirm}
+          onRowClick={handleRowClick}
           enablePagination={enablePagination}
           selected={selectedItems}
           setSelected={setSelectedItems}
@@ -234,6 +256,26 @@ const CustomDataPage = ({
         onCancel={() => setOpenConfirmDialog(false)}
         styles={modalWrapperStyles}
       />
+
+      {assignRoleComponent && openAssignRoleForm && (
+        <ModalWrapper
+          open={openAssignRoleForm}
+          title="Gán quyền cho nhân viên"
+          content={assignRoleComponent({ item: currentItem, onClose: handleCloseForm })}
+          showActions={false}
+          onClose={handleCloseForm}
+          styles={{
+            ...modalWrapperStyles,
+            paper: {
+              ...modalWrapperStyles.paper,
+              width: '90vw',
+              height: '90vh',
+              maxWidth: 'none',
+              maxHeight: 'none'
+            }
+          }}
+        />
+      )}
 
       {createComponent && openCreateForm && (
         <ModalWrapper
@@ -281,10 +323,12 @@ CustomDataPage.propTypes = {
   filterComponent: PropTypes.node,
   searchPlaceholder: PropTypes.string,
   onSearch: PropTypes.func,
+  onAssignRoleToUsers: PropTypes.func,
   onCreate: PropTypes.func,
   onEdit: PropTypes.func,
   onView: PropTypes.func,
   onDelete: PropTypes.func,
+  onRowClick: PropTypes.func,
   permissions: PropTypes.shape({
     create: PropTypes.bool,
     edit: PropTypes.bool,

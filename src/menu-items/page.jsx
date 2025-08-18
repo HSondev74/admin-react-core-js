@@ -1,12 +1,14 @@
 // assets
-import { LoginOutlined, ProfileOutlined, UserOutlined, TeamOutlined } from '@ant-design/icons';
+import { LoginOutlined, ProfileOutlined, UserOutlined, TeamOutlined, ReadOutlined, ScheduleOutlined } from '@ant-design/icons';
 
 // icons
 const icons = {
   LoginOutlined,
   ProfileOutlined,
   UserOutlined,
-  TeamOutlined
+  TeamOutlined,
+  ReadOutlined,
+  ScheduleOutlined
 };
 
 // ==============================|| MENU ITEMS - EXTRA PAGES ||============================== //
@@ -44,7 +46,7 @@ const pages = {
               parentId: '2',
               path: '/abc',
               menuId: '4',
-              title: 'Quản lý nhân viên abc',
+              title: 'Quản lý nhân viên',
               icon: 'faUser1',
               roleName: 'hrm_user_abc'
             }
@@ -54,7 +56,7 @@ const pages = {
     },
     {
       id: 'user-mangement',
-      title: 'Quản lý Người dùng',
+      title: 'Quản lý người dùng',
       type: 'item',
       url: '/user-mangement',
       icon: icons.UserOutlined,
@@ -96,10 +98,24 @@ const pages = {
     },
     {
       id: 'role-mangement',
-      title: 'Quản lý Chức vụ',
+      title: 'Quản lý chức vụ',
       type: 'item',
       url: '/role-mangement',
       icon: icons.TeamOutlined
+    },
+    {
+      id: 'dictionary',
+      title: 'Quản lý từ điển',
+      type: 'item',
+      url: '/dictionary',
+      icon: icons.ReadOutlined
+    },
+    {
+      id: 'timekeeping',
+      title: 'Quản lý chấm công',
+      type: 'item',
+      url: '/timekeeping',
+      icon: icons.ScheduleOutlined
     }
   ]
 };

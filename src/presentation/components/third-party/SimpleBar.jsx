@@ -18,6 +18,7 @@ const RootStyle = styled(BrowserView)({
 // scroll bar wrapper
 const SimpleBarStyle = styled(SimpleBar)(({ theme }) => ({
   maxHeight: '100%',
+  padding: '0px',
   '& .simplebar-scrollbar': {
     '&:before': {
       background: alpha(theme.palette.grey[500], 0.48),
@@ -38,6 +39,9 @@ const SimpleBarStyle = styled(SimpleBar)(({ theme }) => ({
   },
   '& .simplebar-mask': {
     zIndex: 'inherit'
+  },
+  '& .css-1v3caum': {
+    padding: 0
   }
 }));
 

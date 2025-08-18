@@ -18,7 +18,15 @@ import Collapse from '@mui/material/Collapse';
 import Typography from '@mui/material/Typography';
 import { Menu, MenuItem } from '@mui/material';
 //antd icon
-import { ArrowDownOutlined, ArrowRightOutlined, DeleteOutlined, EditOutlined, EyeOutlined, MoreOutlined } from '@ant-design/icons';
+import {
+  ArrowDownOutlined,
+  ArrowRightOutlined,
+  CompassOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
+  MoreOutlined
+} from '@ant-design/icons';
 // style
 import { tableStyles } from '../../assets/styles/tableStyles';
 
@@ -31,16 +39,18 @@ const CustomDataTable = ({
   loading = false,
   showCheckbox = true,
   actionType = 'icon-text', // 'icon', 'text', 'icon-text'
-  permissions = { edit: true, view: true, delete: true },
+  permissions = { assignRole: true, edit: true, view: true, delete: true },
   collapsible = false,
   renderCollapse,
   pagination = { page: 0, rowsPerPage: 10, totalItems: 0 },
   onChangePage,
   onChangeRowsPerPage,
   onSelectionChange,
+  onAssignRoleToUsers,
   onEdit,
   onView,
   onDelete,
+  onRowClick,
   enablePagination = true,
   selected,
   setSelected
@@ -148,6 +158,15 @@ const CustomDataTable = ({
     [onChangeRowsPerPage, enablePagination]
   );
 
+  const handleAssignRole = useCallback(
+    (item) => {
+      if (onAssignRoleToUsers) {
+        onAssignRoleToUsers(item);
+      }
+    },
+    [onAssignRoleToUsers]
+  );
+
   // Chỉ chuyển sự kiện edit lên component cha
   const handleEdit = useCallback(
     (item) => {
@@ -177,6 +196,20 @@ const CustomDataTable = ({
     [onDelete]
   );
 
+  const handleRowClick = useCallback(
+    (row, event) => {
+      if (!onRowClick) return;
+
+      // Tránh trigger khi click vào checkbox hoặc action buttons
+      if (event.target.closest('input[type="checkbox"]') || event.target.closest('button') || event.target.closest('[role="button"]')) {
+        return;
+      }
+
+      onRowClick(row);
+    },
+    [onRowClick]
+  );
+
   const toggleRowExpand = useCallback((id) => {
     setExpandedRows((prev) => ({
       ...prev,
@@ -189,7 +222,7 @@ const CustomDataTable = ({
   // Render action buttons for each row
   const renderActionButtons = useCallback(
     (item) => (
-      <Box sx={tableStyles.actionButtonStyle}>
+      <Box>
         <IconButton
           aria-label="more actions"
           aria-controls={open ? 'actions-menu' : undefined}
@@ -206,10 +239,22 @@ const CustomDataTable = ({
           anchorEl={anchorEl}
           open={open}
           onClose={handleCloseMenu}
+          elevation={1}
           MenuListProps={{
             'aria-labelledby': 'basic-button'
           }}
         >
+          {permissions.assignRole && (
+            <MenuItem
+              onClick={() => {
+                handleAssignRole(selectedItem);
+                handleCloseMenu();
+              }}
+              sx={{ color: 'darkcyan' }}
+            >
+              <CompassOutlined style={tableStyles.menuItemIcon} /> Gán quyền
+            </MenuItem>
+          )}
           {permissions.view && (
             <MenuItem
               onClick={() => {
@@ -272,7 +317,7 @@ const CustomDataTable = ({
               {columns.map((column) => (
                 <TableCell
                   key={column.id}
-                  align={column.align || 'center'}
+                  align={column.align || 'left'}
                   sx={{
                     ...tableStyles.tableHeadCellData,
                     minWidth: tableStyles.tableHeadCellData.minWidth(column),
@@ -310,7 +355,7 @@ const CustomDataTable = ({
                     (collapsible ? 1 : 0) +
                     (permissions.edit || permissions.view || permissions.delete ? 1 : 0)
                   }
-                  align="center"
+                  align="left"
                 >
                   <CircularProgress size={40} />
                   <Typography variant="body2" sx={{ mt: 1 }}>
@@ -327,7 +372,7 @@ const CustomDataTable = ({
                     (collapsible ? 1 : 0) +
                     (permissions.edit || permissions.view || permissions.delete ? 1 : 0)
                   }
-                  align="center"
+                  align="left"
                 >
                   <Typography variant="body2">Không có dữ liệu</Typography>
                 </TableCell>
@@ -339,7 +384,18 @@ const CustomDataTable = ({
 
                 return (
                   <>
-                    <TableRow hover role="checkbox" aria-checked={isItemSelected} tabIndex={-1} key={row.id} selected={isItemSelected}>
+                    <TableRow
+                      hover
+                      role="checkbox"
+                      aria-checked={isItemSelected}
+                      tabIndex={-1}
+                      key={row.id}
+                      selected={isItemSelected}
+                      onClick={onRowClick ? (event) => handleRowClick(row, event) : undefined}
+                      sx={{
+                        cursor: onRowClick ? 'pointer' : 'default'
+                      }}
+                    >
                       {collapsible && (
                         <TableCell sx={tableStyles.tableBodyCellExpand}>
                           <IconButton aria-label="expand row" size="small" onClick={() => toggleRowExpand(row.id)}>
@@ -359,10 +415,16 @@ const CustomDataTable = ({
                           />
                         </TableCell>
                       )}
-                      {columns.map((column) => {
+                      {columns.map((column, colIndex) => {
                         const value = row[column.id];
                         return (
-                          <TableCell key={column.id} align={column.align || 'center'} sx={{ py: column.padding || 1 }}>
+                          <TableCell
+                            key={column.id}
+                            align={column.align || 'left'}
+                            sx={{
+                              borderRight: colIndex < columns.length - 1 ? '1px solid #e0e0e0' : 'none'
+                            }}
+                          >
                             {column.render ? column.render(value, row) : value}
                           </TableCell>
                         );
@@ -374,7 +436,7 @@ const CustomDataTable = ({
                     {collapsible && (
                       <TableRow>
                         <TableCell
-                          sx={tableStyles.collapsibleRow}
+                          sx={{ ...tableStyles.collapsibleRow, borderBottom: '1px solid #e0e0e0' }}
                           colSpan={
                             columns.length +
                             (showCheckbox ? 1 : 0) +
@@ -445,6 +507,7 @@ CustomDataTable.propTypes = {
   onChangePage: PropTypes.func,
   onChangeRowsPerPage: PropTypes.func,
   onSelectionChange: PropTypes.func,
+  onAssignRoleToUsers: PropTypes.func,
   onEdit: PropTypes.func,
   onView: PropTypes.func,
   onDelete: PropTypes.func,

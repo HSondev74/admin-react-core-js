@@ -4,6 +4,8 @@ import { lazy } from 'react';
 import Loadable from '../presentation/components/Loadable';
 import DashboardLayout from '../presentation/components/layout/Dashboard';
 import MenuManagement from '../presentation/screen/menus';
+import DictionaryPage from '../presentation/screen/dictionary';
+import TimeKeepingPage from '../presentation/screen/timekeeping';
 
 // render- Dashboard
 const DashboardDefault = Loadable(lazy(() => import('../presentation/screen/dashboard/default')));
@@ -69,8 +71,12 @@ const MainRoutes = {
       element: <MenuManagement /> // Placeholder for settings page
     },
     {
-      path: 'setup-menu',
-      element: <SamplePage /> // Placeholder for setup menu page
+      path: 'dictionary',
+      element: <DictionaryPage />
+    },
+    {
+      path: 'timekeeping',
+      element: <TimeKeepingPage />
     }
   ]
 };
