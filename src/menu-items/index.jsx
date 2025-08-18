@@ -1,7 +1,7 @@
 import { useGetMenuTree } from '../infrastructure/utils/menu';
 
 export const useMenuItems = () => {
-  const { menuItems, menuLoading, menuError } = useGetMenuTree();
+  const { menuItems, menuLoading } = useGetMenuTree();
 
   if (menuLoading) {
     return { items: [] };
@@ -18,7 +18,6 @@ export const useMenuItems = () => {
     ]
   };
 
-  console.log('Final menu result:', result);
   return result;
 };
 
