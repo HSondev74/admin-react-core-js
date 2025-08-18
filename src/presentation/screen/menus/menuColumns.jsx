@@ -2,7 +2,7 @@ import { Box, Typography, IconButton } from '@mui/material';
 import { ArrowUpward, ArrowDownward } from '@mui/icons-material';
 import { DownOutlined, RightOutlined } from '@ant-design/icons';
 
-export const getMenuColumns = (expandedItems, onToggleExpand, onSortOrder) => [
+export const getMenuColumns = (expandedItems, onToggleExpand, onSortOrder, flatMenus = []) => [
   {
     id: 'name',
     label: 'Tên danh sách',
@@ -83,25 +83,35 @@ export const getMenuColumns = (expandedItems, onToggleExpand, onSortOrder) => [
     label: 'Sắp xếp',
     minWidth: 80,
     align: 'center',
-    render: (value, row) => (
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-        <IconButton 
-          size="small" 
-          sx={{ p: 0.25 }}
-          onClick={() => onSortOrder && onSortOrder(row, 'UP')}
-          disabled={!onSortOrder}
-        >
-          <ArrowUpward sx={{ fontSize: 16 }} />
-        </IconButton>
-        <IconButton 
-          size="small" 
-          sx={{ p: 0.25 }}
-          onClick={() => onSortOrder && onSortOrder(row, 'DOWN')}
-          disabled={!onSortOrder}
-        >
-          <ArrowDownward sx={{ fontSize: 16 }} />
-        </IconButton>
-      </Box>
-    )
+    render: (value, row) => {
+      const currentIndex = flatMenus.findIndex(menu => menu.item?.id === row.item?.id);
+      const isFirst = currentIndex === 0;
+      const isLast = currentIndex === flatMenus.length - 1;
+      
+      return (
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+          {!isFirst && (
+            <IconButton 
+              size="small" 
+              sx={{ p: 0.25 }}
+              onClick={() => onSortOrder && onSortOrder(row, 'UP')}
+              disabled={!onSortOrder}
+            >
+              <ArrowUpward sx={{ fontSize: 16 }} />
+            </IconButton>
+          )}
+          {!isLast && (
+            <IconButton 
+              size="small" 
+              sx={{ p: 0.25 }}
+              onClick={() => onSortOrder && onSortOrder(row, 'DOWN')}
+              disabled={!onSortOrder}
+            >
+              <ArrowDownward sx={{ fontSize: 16 }} />
+            </IconButton>
+          )}
+        </Box>
+      );
+    }
   }
 ];
