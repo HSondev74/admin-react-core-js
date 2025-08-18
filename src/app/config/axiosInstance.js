@@ -79,9 +79,9 @@ axiosInstance.interceptors.response.use(
     });
 
     // Handle custom success messages from API
-    if (response.data?.message) {
-      enqueueSnackbar(response.data.message, { variant: 'success' });
-    }
+    // if (response.data?.message) {
+    //   enqueueSnackbar(response.data.message, { variant: 'success' });
+    // }
 
     return response;
   },
