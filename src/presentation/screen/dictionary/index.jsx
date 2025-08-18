@@ -72,7 +72,7 @@ const DictionaryPage = () => {
   const dictionaryColumns = [
     {
       id: 'name',
-      label: 'Tên từ điển',
+      label: 'Tên danh mục',
       minWidth: 120,
       sortable: true,
       render: (value, row) => (
@@ -94,7 +94,7 @@ const DictionaryPage = () => {
     {
       id: 'label',
       label: 'Nhãn',
-      minWidth: 120,
+      minWidth: 150,
       sortable: true,
       render: (value, row) => (
         <div>
@@ -105,7 +105,7 @@ const DictionaryPage = () => {
     {
       id: 'value',
       label: 'Giá trị',
-      minWidth: 100,
+      minWidth: 150,
       sortable: true,
       render: (value) => <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded font-mono text-xs">{value}</span>
     },
@@ -131,7 +131,7 @@ const DictionaryPage = () => {
         mutate((key) => Array.isArray(key) && key[0] === 'dictionaries');
       }
     } catch (error) {
-      console.error('Có lỗi khi tạo từ điển:', error);
+      console.error('Có lỗi khi tạo danh mục:', error);
     }
   }, []);
 
@@ -142,7 +142,7 @@ const DictionaryPage = () => {
         mutate((key) => Array.isArray(key) && key[0] === 'dictionaries');
       }
     } catch (error) {
-      console.error('Có lỗi khi cập nhật từ điển:', error);
+      console.error('Có lỗi khi cập nhật danh mục:', error);
     }
   }, []);
 
@@ -159,7 +159,7 @@ const DictionaryPage = () => {
           }
         }
       } catch (error) {
-        console.error('Có lỗi khi xóa từ điển:', error);
+        console.error('Có lỗi khi xóa danh mục:', error);
       }
     },
     [selectedDict]
@@ -184,7 +184,7 @@ const DictionaryPage = () => {
           mutate((key) => Array.isArray(key) && key[0] === 'dictionary-items');
         }
       } catch (error) {
-        console.error('Có lỗi khi tạo mục từ điển:', error);
+        console.error('Có lỗi khi tạo mục danh mục:', error);
       }
     },
     [selectedDict]
@@ -197,7 +197,7 @@ const DictionaryPage = () => {
         mutate((key) => Array.isArray(key) && key[0] === 'dictionary-items');
       }
     } catch (error) {
-      console.error('Có lỗi khi cập nhật mục từ điển:', error);
+      console.error('Có lỗi khi cập nhật mục danh mục:', error);
     }
   }, []);
 
@@ -208,7 +208,7 @@ const DictionaryPage = () => {
         mutate((key) => Array.isArray(key) && key[0] === 'dictionary-items');
       }
     } catch (error) {
-      console.error('Có lỗi khi xóa mục từ điển:', error);
+      console.error('Có lỗi khi xóa mục danh mục:', error);
     }
   }, []);
 
@@ -224,10 +224,8 @@ const DictionaryPage = () => {
       <Grid container spacing={3}>
         <Grid item lg={12} xl={6}>
           <Paper sx={{ p: 2 }}>
-            <Typography variant="h3" gutterBottom>
-              Từ điển
-            </Typography>
             <CustomDataPage
+              title="Danh mục"
               data={data}
               columns={dictionaryColumns}
               page="dictionaries"
@@ -244,7 +242,7 @@ const DictionaryPage = () => {
               viewComponent={(props) => <DictionaryFormAction {...props} title="Xem chi tiết chức vụ" isView={true} />}
               permissions={{ assignRole: false, create: true, edit: true, view: true, delete: true }}
               onRowClick={handleDictionaryRowClick}
-              searchPlaceholder="Tìm kiếm theo tên từ điển..."
+              searchPlaceholder="Tìm kiếm theo tên danh mục..."
               loading={loading}
               enableSearch
               enablePagination
@@ -256,7 +254,7 @@ const DictionaryPage = () => {
         <Grid item lg={12} xl={6}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h3" gutterBottom>
-              Chi tiết từ điển
+              Chi tiết danh mục
             </Typography>
             {selectedDict && <Typography>Từ điển: {selectedDict.name}</Typography>}
             {selectedDict ? (
@@ -290,7 +288,7 @@ const DictionaryPage = () => {
                   <DictionaryItemFormAction {...props} title="Xem chi tiết chức vụ" isView={true} dictType={selectedDict.name} />
                 )}
                 permissions={{ assignRole: false, create: true, edit: true, view: true, delete: true }}
-                searchPlaceholder="Tìm kiếm theo nhãn của từ điển..."
+                searchPlaceholder="Tìm kiếm theo nhãn của danh mục..."
                 loading={itemsLoading}
                 enableSearch
                 enablePagination
@@ -300,9 +298,9 @@ const DictionaryPage = () => {
             ) : (
               <Box sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
                 <Typography variant="subtitle1" gutterBottom>
-                  Chưa chọn từ điển
+                  Chưa chọn danh mục
                 </Typography>
-                <Typography variant="body2">Vui lòng chọn một từ điển để xem chi tiết</Typography>
+                <Typography variant="body2">Vui lòng chọn một danh mục để xem chi tiết</Typography>
               </Box>
             )}
           </Paper>

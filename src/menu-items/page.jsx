@@ -70,7 +70,7 @@ const pages = {
     },
     {
       id: 'dictionary',
-      title: 'Quản lý từ điển',
+      title: 'Quản lý danh mục',
       type: 'item',
       url: '/dictionary',
       icon: icons.ReadOutlined
