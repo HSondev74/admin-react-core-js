@@ -102,50 +102,110 @@ export default function MenuManagement() {
     }
   };
 
+  // Apply filters and search
+  const applyFilters = (searchValue = searchTerm, filters = activeFilters) => {
+    let result = [...menus];
+
+    // Apply search filter
+    if (searchValue?.trim()) {
+      const filterMenus = (menuList) => {
+        const filtered = [];
+        menuList.forEach((menu) => {
+          const item = menu.item;
+          const matchesSearch =
+            item.name?.toLowerCase().includes(searchValue.toLowerCase()) ||
+            item.path?.toLowerCase().includes(searchValue.toLowerCase()) ||
+            item.menuType?.toLowerCase().includes(searchValue.toLowerCase());
+
+          if (matchesSearch) {
+            filtered.push(menu);
+          } else if (menu.children && menu.children.length > 0) {
+            const filteredChildren = filterMenus(menu.children);
+            if (filteredChildren.length > 0) {
+              filtered.push({ ...menu, children: filteredChildren });
+            }
+          }
+        });
+        return filtered;
+      };
+      result = filterMenus(result);
+    }
+
+    // Apply advanced filters
+    if (filters && Object.keys(filters).length > 0) {
+      const filterByAdvanced = (menuList) => {
+        return menuList
+          .filter((menu) => {
+            const item = menu.item;
+            let matches = true;
+
+            if (filters.menuType && filters.menuType !== '') {
+              matches = matches && item.menuType === filters.menuType;
+            }
+
+            if (filters.hasChildren && filters.hasChildren !== '') {
+              const hasChildren = menu.children && menu.children.length > 0;
+              matches = matches && (filters.hasChildren === 'true' ? hasChildren : !hasChildren);
+            }
+
+            if (filters.roles && Array.isArray(filters.roles) && filters.roles.length > 0) {
+              const itemRoles = item.roles || [];
+              matches = matches && filters.roles.some((roleId) => itemRoles.includes(roleId));
+            }
+
+            return matches;
+          })
+          .map((menu) => ({
+            ...menu,
+            children: menu.children ? filterByAdvanced(menu.children) : []
+          }));
+      };
+      result = filterByAdvanced(result);
+    }
+
+    setFilteredMenus(result);
+    setPage(0); // Reset to first page when filters change
+  };
+
   // Search functionality
   const handleSearch = (searchValue) => {
     setSearchTerm(searchValue);
-    if (!searchValue.trim()) {
-      setFilteredMenus(menus);
-      return;
-    }
-
-    const filterMenus = (menuList) => {
-      const filtered = [];
-      menuList.forEach((menu) => {
-        const item = menu.item;
-        const matchesSearch =
-          item.name?.toLowerCase().includes(searchValue.toLowerCase()) ||
-          item.path?.toLowerCase().includes(searchValue.toLowerCase()) ||
-          item.menuType?.toLowerCase().includes(searchValue.toLowerCase());
-
-        if (matchesSearch) {
-          filtered.push(menu);
-        } else if (menu.children && menu.children.length > 0) {
-          const filteredChildren = filterMenus(menu.children);
-          if (filteredChildren.length > 0) {
-            filtered.push({ ...menu, children: filteredChildren });
-          }
-        }
-      });
-      return filtered;
-    };
-
-    setFilteredMenus(filterMenus(menus));
+    applyFilters(searchValue, activeFilters);
   };
 
   // Advanced filter functionality
   const handleAdvancedFilter = (filters) => {
     setActiveFilters(filters);
-    // Simple implementation - can be expanded if needed
-    setFilteredMenus(menus);
+    applyFilters(searchTerm, filters);
   };
 
+  // Re-apply filters when menus data changes
+  useEffect(() => {
+    if (menus.length > 0) {
+      applyFilters(searchTerm, activeFilters);
+    }
+  }, [menus]);
+
   // Pagination handlers
-  const handleChangePage = (newPage) => setPage(newPage);
+  const handleChangePage = (newPage) => {
+    setPage(newPage);
+  };
+
   const handleChangeRowsPerPage = (newRowsPerPage) => {
     setRowsPerPage(newRowsPerPage);
     setPage(0);
+  };
+
+  // Get paginated data
+  const getPaginatedData = () => {
+    const flatMenus = listMenus(filteredMenus, 0, expandedItems);
+    const startIndex = page * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return flatMenus.slice(startIndex, endIndex);
+  };
+
+  const getTotalItems = () => {
+    return listMenus(filteredMenus, 0, expandedItems).length;
   };
 
   // Handle expand/collapse
@@ -181,8 +241,13 @@ export default function MenuManagement() {
     }
   };
 
-  // Get columns configuration
-  const columns = getMenuColumns(expandedItems, handleToggleExpand, handleSortOrder);
+  // Get columns configuration with sort logic
+  const getColumnsWithSortLogic = () => {
+    const flatMenus = listMenus(filteredMenus, 0, expandedItems);
+    return getMenuColumns(expandedItems, handleToggleExpand, handleSortOrder, flatMenus);
+  };
+
+  const columns = getColumnsWithSortLogic();
 
   if (error) {
     return (
@@ -196,7 +261,7 @@ export default function MenuManagement() {
     <>
       <CustomDataPage
         title="Quản lý Danh sách"
-        data={listMenus(filteredMenus, 0, expandedItems)}
+        data={getPaginatedData()}
         columns={columns}
         loading={loading}
         showCheckbox={true}
@@ -212,7 +277,7 @@ export default function MenuManagement() {
           view: false,
           delete: true
         }}
-        pagination={{ page, rowsPerPage, totalItems: listMenusUtil(filteredMenus).length }}
+        pagination={{ page, rowsPerPage, totalItems: getTotalItems() }}
         onChangePage={handleChangePage}
         onChangeRowsPerPage={handleChangeRowsPerPage}
         onDelete={handleDelete}
