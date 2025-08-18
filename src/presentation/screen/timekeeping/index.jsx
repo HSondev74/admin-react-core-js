@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useCallback } from 'react';
-import useSWR from 'swr';
+import useSWR, { mutate } from 'swr';
 import timeKeepingApi from '../../../infrastructure/api/http/timeKeeping';
 
 // Utils
@@ -9,11 +9,13 @@ import { formatDateVN } from '../../../app/utils/dateUtils';
 // Custom components
 import CustomDataPage from '../../components/CustomTable/CustomDataPage';
 import TimeKeepingAdvancedFilter from './TimeKeepingAdvancedFilter';
+import TimeKeepingActionForm from './TimeKeepingActionForm';
 
 // Material UI
-import { Chip, Box } from '@mui/material';
+import { Chip, Box, Button, Stack, Typography } from '@mui/material';
 // Ant Design Icons
-import { ClockCircleOutlined, ScheduleOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { ClockCircleOutlined, ScheduleOutlined, CheckCircleOutlined, LoginOutlined, LogoutOutlined } from '@ant-design/icons';
+import { pageStyles } from '../../assets/styles/pageStyles';
 
 const TimeKeepingPage = () => {
   const [pagination, setPagination] = useState({
@@ -22,51 +24,41 @@ const TimeKeepingPage = () => {
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({});
+  const [openActionForm, setOpenActionForm] = useState(false);
+  const [actionType, setActionType] = useState('CHECK_IN');
+
+  // Prepare API parameters
+  const timeKeepingParams = {
+    page: pagination.page - 1,
+    size: pagination.rowsPerPage,
+    ...(searchTerm && { name: searchTerm }),
+    ...(filters.workDateFrom && { workDateFrom: filters.workDateFrom }),
+    ...(filters.workDateTo && { workDateTo: filters.workDateTo }),
+    ...(filters.period && { period: filters.period }),
+    ...(filters.checkType && { checkType: filters.checkType }),
+    ...(filters.status && { status: filters.status }),
+    ...(filters.source && { source: filters.source }),
+    ...(filters.deviceCode && { deviceCode: filters.deviceCode })
+  };
 
   // Fetch data using useSWR
   const {
     data: timeKeepingResponse,
     error: timeKeepingError,
     isLoading: loading
-  } = useSWR(['timekeeping', { searchTerm, filters, pagination }], () => timeKeepingApi.getAllTimekeeping());
+  } = useSWR(['timekeeping', timeKeepingParams], ([key, params]) => timeKeepingApi.getAllTimekeeping(params));
 
   const data = timeKeepingResponse?.data?.data || [];
-
-  // Filter data based on search term and filters
-  const filteredData = data.filter((item) => {
-    // Search filter
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      const matchesSearch =
-        item.name?.toLowerCase().includes(searchLower) ||
-        item.departmentName?.toLowerCase().includes(searchLower) ||
-        item.note?.toLowerCase().includes(searchLower);
-
-      if (!matchesSearch) return false;
-    }
-
-    // Advanced filters
-    if (filters.showLateOnly && !item.isLate) return false;
-    if (filters.showEarlyOnly && !item.isEarly) return false;
-    if (filters.departmentName && item.departmentName !== filters.departmentName) return false;
-    if (filters.checkType && item.checkType !== filters.checkType) return false;
-    if (filters.dateFrom && new Date(item.workDate) < new Date(filters.dateFrom)) return false;
-    if (filters.dateTo && new Date(item.workDate) > new Date(filters.dateTo)) return false;
-
-    return true;
-  });
-
-  // Pagination
-  const startIndex = (pagination.page - 1) * pagination.rowsPerPage;
-  const paginatedData = filteredData.slice(startIndex, startIndex + pagination.rowsPerPage);
-  const totalItems = filteredData.length;
+  const totalItems = data.length;
 
   // Render status chip
-  const renderStatusChip = (isLate) => {
+  const renderStatusChip = (isLate, isEarly) => {
     if (isLate) {
       return <Chip icon={<ClockCircleOutlined />} label="Muộn" color="error" variant="filled" size="small" />;
     }
-
+    if (isEarly) {
+      return <Chip icon={<ScheduleOutlined />} label="Sớm" color="warning" variant="filled" size="small" />;
+    }
     return <Chip icon={<CheckCircleOutlined />} label="Đúng giờ" color="success" variant="filled" size="small" />;
   };
 
@@ -83,19 +75,19 @@ const TimeKeepingPage = () => {
     {
       id: 'name',
       label: 'Tên nhân viên',
-      minWidth: 150,
+      minWidth: 180,
       sortable: true
     },
     {
       id: 'departmentName',
       label: 'Phòng ban',
-      minWidth: 120,
+      minWidth: 140,
       sortable: true
     },
     {
       id: 'workDate',
       label: 'Ngày làm việc',
-      minWidth: 120,
+      minWidth: 100,
       sortable: true,
       render: (value) => {
         if (!value) return 'N/A';
@@ -105,14 +97,14 @@ const TimeKeepingPage = () => {
     {
       id: 'checkTime',
       label: 'Thời gian chấm công',
-      minWidth: 160,
+      minWidth: 100,
       sortable: true,
       render: (value) => formatDateVN(value)
     },
     {
       id: 'checkType',
       label: 'Loại chấm công',
-      minWidth: 120,
+      minWidth: 100,
       render: (value) => renderCheckType(value)
     },
     {
@@ -123,22 +115,17 @@ const TimeKeepingPage = () => {
     },
     {
       id: 'period',
-      label: 'Ca làm việc',
-      minWidth: 100
-    },
-    {
-      id: 'scheduleType',
-      label: 'Loại lịch',
-      minWidth: 100
+      label: 'Ca làm',
+      minWidth: 60
     },
     {
       id: 'note',
       label: 'Ghi chú',
-      minWidth: 150,
+      minWidth: 200,
       render: (value) => (
         <Box
           sx={{
-            maxWidth: 150,
+            maxWidth: 200,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap'
@@ -169,43 +156,78 @@ const TimeKeepingPage = () => {
     setPagination((prev) => ({ ...prev, page: 1, rowsPerPage: newRowsPerPage }));
   }, []);
 
-  const handleView = useCallback((item) => {
-    console.log('View timekeeping record:', item);
-    // Implement view logic if needed
+  // Check In/Check Out handlers
+  const handleCheckIn = useCallback(() => {
+    setActionType('CHECK_IN');
+    setOpenActionForm(true);
   }, []);
 
+  const handleCheckOut = useCallback(() => {
+    setActionType('CHECK_OUT');
+    setOpenActionForm(true);
+  }, []);
+
+  const handleCloseActionForm = useCallback(() => {
+    setOpenActionForm(false);
+  }, []);
+
+  const handleActionSuccess = useCallback(() => {
+    // Refresh data after successful check in/out
+    mutate(['timekeeping', timeKeepingParams]);
+  }, [timeKeepingParams]);
+
   return (
-    <CustomDataPage
-      title="Quản lý chấm công"
-      data={paginatedData}
-      columns={columns}
-      page="timekeeping"
-      filterComponent={<TimeKeepingAdvancedFilter onFilter={handleFilter} />}
-      searchPlaceholder="Tìm kiếm theo tên, phòng ban, ghi chú..."
-      onSearch={handleSearch}
-      onView={handleView}
-      permissions={{
-        assignRole: false,
-        create: false,
-        edit: false,
-        view: false,
-        delete: false
-      }}
-      showCheckbox={false}
-      actionType="icon"
-      collapsible={false}
-      loading={loading}
-      onChangePage={handleChangePage}
-      pagination={{
-        ...pagination,
-        totalItems
-      }}
-      onChangeRowsPerPage={handleChangeRowsPerPage}
-      enableSearch={true}
-      enableFilter={true}
-      enablePagination={true}
-      emptyMessage="Không có dữ liệu chấm công"
-    />
+    <>
+      {/* Check In/Check Out Buttons */}
+      <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Typography sx={pageStyles.title}>Quản lý chấm công</Typography>
+        <Stack direction="row" spacing={2}>
+          <Button variant="contained" color="success" startIcon={<LoginOutlined />} onClick={handleCheckIn} sx={{ minWidth: 120 }}>
+            Check In
+          </Button>
+          <Button variant="contained" color="error" startIcon={<LogoutOutlined />} onClick={handleCheckOut} sx={{ minWidth: 120 }}>
+            Check Out
+          </Button>
+        </Stack>
+      </Box>
+      <CustomDataPage
+        data={data}
+        columns={columns}
+        page="timekeeping"
+        filterComponent={<TimeKeepingAdvancedFilter onFilter={handleFilter} />}
+        searchPlaceholder="Tìm kiếm theo tên nhân viên..."
+        onSearch={handleSearch}
+        permissions={{
+          assignRole: false,
+          create: false,
+          edit: false,
+          view: false,
+          delete: false
+        }}
+        showCheckbox={false}
+        actionType="icon"
+        collapsible={false}
+        loading={loading}
+        onChangePage={handleChangePage}
+        pagination={{
+          ...pagination,
+          totalItems
+        }}
+        onChangeRowsPerPage={handleChangeRowsPerPage}
+        enableSearch={true}
+        enableFilter={true}
+        enablePagination={true}
+        emptyMessage="Không có dữ liệu chấm công"
+      />
+
+      {/* TimeKeeping Action Form */}
+      <TimeKeepingActionForm
+        open={openActionForm}
+        onClose={handleCloseActionForm}
+        actionType={actionType}
+        onSuccess={handleActionSuccess}
+      />
+    </>
   );
 };
 

@@ -63,13 +63,19 @@ class UsersApi extends BaseApi {
    */
   async getListUser(body = {}) {
     try {
-      const { page, size, sortBy, searchTerm, sortDirection, roleIds } = body;
+      const { page, size, sortBy, searchTerm, sortDirection, roleIds, lockFlag, dateFrom, dateTo, name, email, phone } = body;
 
       const paramMap = {
         page: 'page',
         size: 'size',
         sortBy: 'sortBy',
-        sortDirection: 'sortDirection'
+        sortDirection: 'sortDirection',
+        lockFlag: 'lockFlag',
+        dateFrom: 'dateFrom',
+        dateTo: 'dateTo',
+        name: 'name',
+        email: 'email',
+        phone: 'phone'
       };
 
       // Tạo object chứa các params cần thiết từ body
@@ -77,7 +83,13 @@ class UsersApi extends BaseApi {
         page,
         size,
         sortBy,
-        sortDirection
+        sortDirection,
+        lockFlag,
+        dateFrom,
+        dateTo,
+        name,
+        email,
+        phone
       };
 
       const mappedParams = Object.fromEntries(
