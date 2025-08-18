@@ -76,22 +76,6 @@ const RoleManagementPage = () => {
     }
   ];
 
-  // const fetchData = useCallback(async (params) => {
-  //   setLoading(true);
-  //   try {
-  //     const response = await rolesApi.getAllRoles(params);
-  //     setData(response.data.data.content);
-  //   } catch (err) {
-  //     console.log('Lỗi khi gọi API:', err);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // });
-
-  // useEffect(() => {
-  //   fetchData();
-  // }, []);
-
   const handleFilter = useCallback((newFilters) => {
     setFilters(newFilters);
     setPagination((prev) => ({ ...prev, page: 1 }));
