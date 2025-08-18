@@ -57,7 +57,8 @@ export const tableStyles = {
     zIndex: 1
   }),
   tableBodyCellActions: {
-    textAlign: 'center',
+    textAlign: 'left',
+    pl: '20px',
     position: 'sticky',
     right: 0,
     backgroundColor: 'white',

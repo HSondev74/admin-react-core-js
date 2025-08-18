@@ -3,6 +3,7 @@ import { lazy } from 'react';
 // project imports
 import Loadable from '../presentation/components/Loadable';
 import DashboardLayout from '../presentation/components/layout/Dashboard';
+import DictionaryPage from '../presentation/screen/dictionary';
 
 // render- Dashboard
 const DashboardDefault = Loadable(lazy(() => import('../presentation/screen/dashboard/default')));
@@ -61,6 +62,10 @@ const MainRoutes = {
     {
       path: 'role-mangement',
       element: <RoleManagementPage />
+    },
+    {
+      path: 'dictionary',
+      element: <DictionaryPage />
     }
   ]
 };

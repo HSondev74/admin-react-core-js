@@ -1,14 +1,12 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { login, logout, register } from '../store/slices/authSlice';
-import { useAuthService } from '../services/authService';
 import { persistor } from '../store/store';
 
 export const useAuthActions = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error } = useSelector((state) => state.auth);
-  const authService = useAuthService();
 
   const handleLogin = async (credentials) => {
     try {
@@ -32,13 +30,7 @@ export const useAuthActions = () => {
 
   const handleRegister = async (userData) => {
     try {
-      const { data, error } = await authService.register(userData);
-
-      if (error) {
-        return { success: false, error };
-      }
-
-      const result = await dispatch(register(data)).unwrap();
+      const result = await dispatch(register(userData)).unwrap();
       return { success: true, data: result };
     } catch (error) {
       return { success: false, error: error.message || 'Registration failed' };
