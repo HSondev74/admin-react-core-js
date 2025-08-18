@@ -11,7 +11,7 @@ import DrawerContent from './DrawerContent';
 import MiniDrawerStyled from './MiniDrawerStyled';
 
 import { DRAWER_WIDTH } from '../../../../../app/constants';
-import { handlerDrawerOpen, useGetMenuMaster } from '../../../../../infrastructure/api/http/menu';
+import { handlerDrawerOpen, useGetMenuMaster } from '../../../../../infrastructure/utils/menu';
 
 // ==============================|| MAIN LAYOUT - DRAWER ||============================== //
 

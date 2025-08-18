@@ -1,5 +1,5 @@
 import { listMenus } from './menuUtils';
-import menuApi from '../../../infrastructure/api/http/menuApi';
+import menuApi from '../../../infrastructure/api/http/menu';
 
 export const createMenuHandlers = (
   menus,

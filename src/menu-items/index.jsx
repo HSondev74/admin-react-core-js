@@ -1,9 +1,7 @@
-import { useGetMenuTree } from '../infrastructure/api/http/menu';
+import { useGetMenuTree } from '../infrastructure/utils/menu';
 
 export const useMenuItems = () => {
   const { menuItems, menuLoading, menuError } = useGetMenuTree();
-
-  console.log('useMenuItems:', { menuItems, menuLoading, menuError });
 
   if (menuLoading) {
     return { items: [] };

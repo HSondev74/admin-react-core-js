@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from 'react';
-import menuApi from '../../../infrastructure/api/http/menuApi';
+import menuApi from '../../../infrastructure/api/http/menu';
 
 // Material UI components
 import Grid from '@mui/material/Grid';
