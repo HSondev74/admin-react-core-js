@@ -1,81 +1,103 @@
-import useSWR, { mutate } from 'swr';
-import { useMemo } from 'react';
-import menuApi from './menuApi';
-import { getIconComponent } from '../../../utils/iconMapping';
+import BaseApi from './BaseApi';
+import axiosInstance from '../../../app/config/axiosInstance';
 
-const initialState = {
-  isDashboardDrawerOpened: false
-};
+class MenuApi extends BaseApi {
+  constructor() {
+    super('/menus');
+  }
 
-const endpoints = {
-  key: 'api/menu',
-  master: 'master',
-  tree: 'tree'
-};
+  async getAllMenuTree() {
+    try {
+      const response = await this.get('/tree/all');
+      return response.data;
+    } catch (error) {
+      console.error('Menu API error:', error);
+      throw error;
+    }
+  }
 
-const transformMenuData = (apiData) => {
-  if (!apiData?.data) return [];
+  async getMenuTree() {
+    try {
+      const response = await this.get('/me/tree');
+      return response.data;
+    } catch (error) {
+      console.error('Menu API error:', error);
+      throw error;
+    }
+  }
 
-  return apiData.data
-    .sort((a, b) => a.item.sortOrder - b.item.sortOrder)
-    .map((menuItem) => ({
-      id: menuItem.item.id,
-      title: menuItem.item.name,
-      type: 'item',
-      url: menuItem.item.path,
-      icon: getIconComponent(menuItem.item.icon),
-      breadcrumbs: false,
-      children: menuItem.children?.length > 0 ? transformMenuData({ data: menuItem.children }) : undefined
-    }));
-};
+  async addNewMenuItem(formData) {
+    try {
+      await this.post('', formData);
+    } catch (error) {
+      console.error('Menu API error:', error);
+      throw error;
+    }
+  }
 
-export function useGetMenuMaster() {
-  const { data, isLoading } = useSWR(endpoints.key + endpoints.master, () => initialState, {
-    revalidateIfStale: false,
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false
-  });
+  async getMenuById(id) {
+    try {
+      const response = await this.get(`/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Menu API error:', error);
+      throw error;
+    }
+  }
 
-  const memoizedValue = useMemo(
-    () => ({
-      menuMaster: data,
-      menuMasterLoading: isLoading
-    }),
-    [data, isLoading]
-  );
+  // Get roles to assign to menu items
+  async getRoles() {
+    try {
+      const response = await axiosInstance.get('/roles');
+      return response.data;
+    } catch (error) {
+      console.error('Menu API error:', error);
+      throw error;
+    }
+  }
 
-  return memoizedValue;
+  // Handle delete menu item
+  async deleteMenuItem(id) {
+    try {
+      await this.delete(`/${id}`);
+    } catch (error) {
+      console.error('Menu API error:', error);
+      throw error;
+    }
+  }
+
+  async updateMenuItem(formData, menuId) {
+    try {
+      await this.put(`/${menuId}`, formData);
+    } catch (error) {
+      console.error('Menu API error:', error);
+      throw error;
+    }
+  }
+
+  async deleteRoleFromMenu(menuId, roleId) {
+    try {
+      await this.delete(`/${menuId}/roles/${roleId}`);
+    } catch (error) {
+      console.error('Menu API error:', error);
+      throw error;
+    }
+  }
+
+  async updateSortOrder(sourceId, targetId, direction, steps) {
+    try {
+      await this.put('/sort-order', {
+        sourceId,
+        targetId,
+        direction,
+        steps
+      });
+    } catch (error) {
+      console.error('Menu API error:', error);
+      throw error;
+    }
+  }
 }
 
-export function useGetMenuTree() {
-  const { data, isLoading, error } = useSWR(endpoints.key + endpoints.tree, () => menuApi.getMenuTree(), {
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false,
-    onError: (err) => console.error('SWR Error:', err),
-    onSuccess: (data) => console.log('SWR Success:', data)
-  });
-
-  console.log('Menu API Response:', { data, isLoading, error });
-
-  const memoizedValue = useMemo(() => {
-    const transformedData = data ? transformMenuData(data) : [];
-    console.log('Transformed Menu Data:', transformedData);
-    return {
-      menuItems: transformedData,
-      menuLoading: isLoading,
-      menuError: error
-    };
-  }, [data, isLoading, error]);
-
-  return memoizedValue;
-}
-
-export function handlerDrawerOpen(isDashboardDrawerOpened) {
-  mutate(
-    endpoints.key + endpoints.master,
-    (currentMenuMaster) => {
-      return { ...currentMenuMaster, isDashboardDrawerOpened };
-    },
-    false
-  );
-}
+const menuApi = new MenuApi();
+export default menuApi;

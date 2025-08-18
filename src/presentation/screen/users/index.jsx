@@ -1,6 +1,333 @@
+// /* eslint-disable react-hooks/exhaustive-deps */
+// import { useEffect, useState, useCallback } from 'react';
+// import usersApi from '../../../infrastructure/api/http/users';
+
+// // until
+// import { formatDateVN } from '../../../app/utils/dateUtils';
+
+// // Custom components
+// import CustomDataPage from '../../components/CustomTable/CustomDataPage';
+// // User components
+// import UserFormAction from './UserFormAction';
+// import UserAdvancedFilter from './UserAdvancedFilter'; // Component lọc nâng cao
+// //notification
+// import { useNotification } from '../../../contexts/NotificationContext';
+// import { Switch } from '@mui/material';
+// import FormGroup from '@mui/material/FormGroup';
+// import FormControlLabel from '@mui/material/FormControlLabel';
+// import rolesApi from '../../../infrastructure/api/http/role';
+
+// const UserManagementPage = () => {
+//   const [pagination, setPagination] = useState({
+//     page: 1,
+//     rowsPerPage: 10,
+//   });
+//   const [searchTerm, setSearchTerm] = useState('');
+//   const [filters, setFilters] = useState({});
+//   const [roleList, setRoleList] = useState([]);
+
+//   // Handle switch lock/unlock
+//   const handleStatusToggle = useCallback(async (userId, currentStatus) => {
+//     setLoading(true);
+//     try {
+//       const payload = { ids: [userId] };
+
+//       if (currentStatus === '9') {
+//         await usersApi.unlockUser(payload);
+//       } else {
+//         await usersApi.lockUser(payload);
+//       }
+
+//       // Refresh data sau khi update thành công
+//       await fetchData({
+//         page: pagination.page,
+//         size: pagination.rowsPerPage,
+//         sortBy: filters.sortBy || 'createTime',
+//         sortDirection: filters.sortDirection || 'DESC',
+//         searchTerm
+//       });
+//     } catch (error) {
+//       console.error('Có lỗi khi cập nhật trạng thái:', error);
+//     } finally {
+//       setLoading(false);
+//     }
+//   });
+
+//   // Columns definition
+//   const columns = [
+//     {
+//       id: 'name',
+//       label: 'Tên nhân viên',
+//       minWidth: 150,
+//       sortable: true
+//     },
+//     {
+//       id: 'username',
+//       label: 'Tên đăng nhập',
+//       minWidth: 130,
+//       sortable: true
+//     },
+//     {
+//       id: 'email',
+//       label: 'Email',
+//       minWidth: 180,
+//       sortable: true
+//     },
+//     {
+//       id: 'phone',
+//       label: 'Số điện thoại',
+//       minWidth: 130
+//     },
+//     {
+//       id: 'lockFlag',
+//       label: 'Trạng thái',
+//       minWidth: 160,
+//       render: (value, row) => (
+//         <FormGroup>
+//           <FormControlLabel
+//             control={
+//               <Switch
+//                 checked={value === '9'}
+//                 onChange={() => handleStatusToggle(row.id, value)}
+//                 sx={{
+//                   '& .MuiSwitch-switchBase': {
+//                     color: 'green',
+//                     '& + .MuiSwitch-track': {
+//                       backgroundColor: 'green'
+//                     }
+//                   },
+//                   '& .MuiSwitch-switchBase.Mui-checked': {
+//                     color: 'red'
+//                   },
+//                   '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+//                     backgroundColor: 'red'
+//                   }
+//                 }}
+//               />
+//             }
+//             label="Lock/Unlock"
+//           />
+//         </FormGroup>
+//       )
+//     }
+//   ];
+
+//   const fetchData = useCallback(
+//     async (params) => {
+//       setLoading(true);
+//       try {
+//         const response = await usersApi.getListUser(params);
+//         const resData = response?.data?.data;
+//         setData(resData.content);
+//         // setFilteredData(resData.content);
+//         setPagination({ page: resData?.pageNumber, rowsPerPage: resData?.pageSize, totalItems: resData?.totalElements });
+//       } catch (err) {
+//         console.log('Lỗi khi gọi API:', err);
+//       } finally {
+//         setLoading(false);
+//       }
+//     },
+//     [setPagination]
+//   );
+
+//   // pre-load get listrole with params
+//   const fetchRoleList = async () => {
+//     try {
+//       const response = await rolesApi.getAllRoles();
+//       setRoleList(response.data.data);
+//     } catch (err) {
+//       console.error('Lỗi khi gọi API lấy danh sách role:', err);
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchRoleList();
+//     fetchData({ page: pagination.page, size: pagination.rowsPerPage });
+//   }, []);
+
+//   // Handlers
+//   const handleSearch = useCallback(
+//     (term) => {
+//       setSearchTerm(term);
+//       applyFilters(term, filters);
+//     },
+//     [filters]
+//   );
+
+//   const handleFilter = useCallback(
+//     (newFilters) => {
+//       setFilters(newFilters);
+//       applyFilters(searchTerm, newFilters);
+//     },
+//     [searchTerm]
+//   );
+
+//   const applyFilters = useCallback(
+//     (searchTerm, newFilters) => {
+//       setLoading(true);
+
+//       const reqBody = {
+//         page: 1,
+//         size: pagination.rowsPerPage
+//       };
+
+//       if (searchTerm) reqBody.searchTerm = searchTerm;
+//       if (newFilters?.sortBy) reqBody.sortBy = newFilters.sortBy;
+//       if (newFilters?.sortDirection) reqBody.sortDirection = newFilters.sortDirection;
+
+//       setPagination((prev) => ({ ...prev, page: 1 }));
+//       fetchData(reqBody);
+
+//       setLoading(false);
+//     },
+//     [data]
+//   );
+
+//   const handleChangePage = useCallback(
+//     (newPage) => {
+//       setPagination((prev) => {
+//         const reqBody = {
+//           page: newPage,
+//           size: prev.rowsPerPage
+//         };
+
+//         // Chỉ thêm vào nếu có giá trị
+//         if (searchTerm) reqBody.searchTerm = searchTerm;
+//         if (filters?.sortBy) reqBody.sortBy = filters.sortBy;
+//         if (filters?.sortDirection) reqBody.sortDirection = filters.sortDirection;
+
+//         fetchData(reqBody);
+//         return {
+//           ...prev,
+//           page: newPage
+//         };
+//       });
+//     },
+//     [fetchData, filters, searchTerm]
+//   );
+
+//   const handleChangeRowsPerPage = useCallback(
+//     (newRowsPerPage) => {
+//       setPagination((prev) => {
+//         const reqBody = {
+//           page: 0,
+//           size: prev.rowsPerPage
+//         };
+
+//         // Chỉ thêm vào nếu có giá trị
+//         if (searchTerm) reqBody.searchTerm = searchTerm;
+//         if (filters?.sortBy) reqBody.sortBy = filters.sortBy;
+//         if (filters?.sortDirection) reqBody.sortDirection = filters.sortDirection;
+
+//         fetchData(reqBody);
+//         return {
+//           ...prev,
+//           page: 0,
+//           rowsPerPage: newRowsPerPage
+//         };
+//       });
+//     },
+//     [fetchData, filters, searchTerm]
+//   );
+//   const handleCreate = useCallback(
+//     async (newData) => {
+//       try {
+//         const { lockFlag, ...rest } = newData;
+//         await usersApi.register(rest);
+
+//         await fetchData({
+//           page: pagination.page,
+//           size: pagination.rowsPerPage,
+//           sortBy: filters.sortBy || 'createTime',
+//           sortDirection: filters.sortDirection || 'DESC',
+//           searchTerm
+//         });
+//       } catch (error) {
+//         console.error('Có lỗi khi tạo nhân viên:', error);
+//       }
+//     },
+//     [fetchData, pagination.page, pagination.rowsPerPage, searchTerm, filters]
+//   );
+
+//   const handleEdit = useCallback(
+//     async (editedData) => {
+//       try {
+//         await usersApi.updateUser(editedData.id, editedData);
+
+//         await fetchData({
+//           page: pagination.page,
+//           size: pagination.rowsPerPage,
+//           sortBy: filters.sortBy || 'createTime',
+//           sortDirection: filters.sortDirection || 'DESC',
+//           searchTerm
+//         });
+//       } catch (error) {
+//         console.error('Có lỗi khi cập nhật nhân viên:', error);
+//       }
+//     },
+//     [fetchData, pagination.page, pagination.rowsPerPage, searchTerm, filters]
+//   );
+
+//   const handleDelete = useCallback(
+//     async (itemToDelete) => {
+//       try {
+//         await usersApi.deleteUsers(itemToDelete);
+
+//         await fetchData({
+//           page: pagination.page,
+//           size: pagination.rowsPerPage,
+//           sortBy: filters.sortBy || 'createTime',
+//           sortDirection: filters.sortDirection || 'DESC',
+//           searchTerm
+//         });
+//       } catch (error) {
+//         console.error('Có lỗi khi xóa nhân viên:', error);
+//       }
+//     },
+//     [fetchData, pagination.page, pagination.rowsPerPage, searchTerm, filters]
+//   );
+
+//   // Render component
+//   return (
+//     <CustomDataPage
+//       title="Quản lý nhân viên"
+//       data={data}
+//       columns={columns}
+//       page="users"
+//       filterComponent={<UserAdvancedFilter onFilter={handleFilter} />}
+//       searchPlaceholder="Tìm kiếm theo tên, email, số điện thoại..."
+//       onSearch={handleSearch}
+//       onCreate={handleCreate}
+//       onEdit={handleEdit}
+//       onDelete={handleDelete}
+//       permissions={{ assignRole: false, create: true, edit: true, view: true, delete: true }}
+//       showCheckbox={true}
+//       actionType="icon-text"
+//       createComponent={(props) => (
+//         <UserFormAction {...props} roleList={roleList.content} title="Thêm nhân viên mới" isView={false} onSubmit={handleCreate} />
+//       )}
+//       editComponent={(props) => (
+//         <UserFormAction {...props} roleList={roleList.content} title="Chỉnh sửa nhân viên" isView={false} onSubmit={handleEdit} />
+//       )}
+//       viewComponent={(props) => <UserFormAction {...props} roleList={roleList.content} title="Xem chi tiết nhân viên" isView={true} />}
+//       collapsible={false}
+//       loading={loading}
+//       onChangePage={handleChangePage}
+//       pagination={pagination}
+//       onChangeRowsPerPage={handleChangeRowsPerPage}
+//       enableSearch={true}
+//       enableFilter={true}
+//       enablePagination={true}
+//     />
+//   );
+// };
+
+// export default UserManagementPage;
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import useSWR, { mutate } from 'swr';
 import usersApi from '../../../infrastructure/api/http/users';
+import rolesApi from '../../../infrastructure/api/http/role';
 
 // until
 import { formatDateVN } from '../../../app/utils/dateUtils';
@@ -17,21 +344,50 @@ import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 
 const UserManagementPage = () => {
-  // State
-  const [loading, setLoading] = useState(true);
-
-  const [data, setData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
   const [pagination, setPagination] = useState({
-    page: 0,
-    rowsPerPage: 10,
-    totalItems: 0
+    page: 1,
+    rowsPerPage: 10
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({});
 
-  //notification
-  const { showNotification, hideNotification } = useNotification();
+  const usersParams = {
+    page: pagination.page - 1,
+    size: pagination.rowsPerPage,
+    ...(searchTerm && { searchTerm }),
+    ...(filters.sortBy && { sortBy: filters.sortBy }),
+    ...(filters.sortDirection && { sortDirection: filters.sortDirection })
+  };
+
+  const {
+    data: usersResponse,
+    error: usersError,
+    isLoading: loading
+  } = useSWR(['users', usersParams], ([key, params]) => usersApi.getListUser(params));
+
+  const data = usersResponse?.data?.data?.content || [];
+  const totalItems = usersResponse?.data?.data?.totalElements || 0;
+
+  const { data: rolesResponse, error: rolesError, isLoading: rolesLoading } = useSWR('roles', () => rolesApi.getAllRoles());
+
+  const roleList = rolesResponse?.data?.data || [];
+
+  // Handle switch lock/unlock
+  const handleStatusToggle = useCallback(async (userId, currentStatus) => {
+    try {
+      const payload = { ids: [userId] };
+
+      if (currentStatus === '9') {
+        await usersApi.unlockUser(payload);
+      } else {
+        await usersApi.lockUser(payload);
+      }
+
+      mutate((key) => Array.isArray(key) && key[0] === 'users');
+    } catch (error) {
+      console.error('Có lỗi khi cập nhật trạng thái:', error);
+    }
+  }, []);
 
   // Columns definition
   const columns = [
@@ -44,7 +400,7 @@ const UserManagementPage = () => {
     {
       id: 'username',
       label: 'Tên đăng nhập',
-      minWidth: 150,
+      minWidth: 130,
       sortable: true
     },
     {
@@ -56,20 +412,20 @@ const UserManagementPage = () => {
     {
       id: 'phone',
       label: 'Số điện thoại',
-      minWidth: 120
+      minWidth: 130
     },
     {
       id: 'lockFlag',
       label: 'Trạng thái',
-      minWidth: 150,
-      render: (value) => (
+      minWidth: 160,
+      render: (value, row) => (
         <FormGroup>
           <FormControlLabel
             control={
               <Switch
-                checked={value === '1'}
+                checked={value === '9'}
+                onChange={() => handleStatusToggle(row.id, value)}
                 sx={{
-                  marginLeft: { xs: '7vw', sm: '4vw', xl: '5vw' },
                   '& .MuiSwitch-switchBase': {
                     color: 'green',
                     '& + .MuiSwitch-track': {
@@ -85,181 +441,92 @@ const UserManagementPage = () => {
                 }}
               />
             }
-            label="Lock"
+            label="Lock/Unlock"
           />
         </FormGroup>
       )
     }
   ];
 
-  //check response code
-  const isSuccessCode = (code) => code >= 200 && code < 300;
+  const handleSearch = useCallback((term) => {
+    setSearchTerm(term);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  }, []);
 
-  const fetchData = useCallback(
-    async (params) => {
-      setLoading(true);
-      try {
-        const response = await usersApi.getListUser(params);
-        const resData = response?.data;
-        setData(resData.content);
-        setFilteredData(resData.content);
-        setPagination({ page: resData?.number, rowsPerPage: resData?.size, totalItems: resData?.totalElements });
-      } catch (err) {
-        console.log('Lỗi khi gọi API:', err);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [setPagination]
-  );
+  const handleFilter = useCallback((newFilters) => {
+    setFilters(newFilters);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  }, []);
 
-  useEffect(() => {
-    fetchData({ page: pagination.page, size: pagination.rowsPerPage });
-  }, [fetchData]);
+  const handleChangePage = useCallback((newPage) => {
+    setPagination((prev) => ({ ...prev, page: newPage }));
+  }, []);
 
-  // Handlers
-  const handleSearch = useCallback(
-    (term) => {
-      setSearchTerm(term);
-      applyFilters(term, filters);
-    },
-    [filters]
-  );
+  const handleChangeRowsPerPage = useCallback((newRowsPerPage) => {
+    setPagination((prev) => ({ ...prev, page: 1, rowsPerPage: newRowsPerPage }));
+  }, []);
 
-  const handleFilter = useCallback(
-    (newFilters) => {
-      setFilters(newFilters);
-      applyFilters(searchTerm, newFilters);
-    },
-    [searchTerm]
-  );
+  const handleCreate = useCallback(async (newData) => {
+    try {
+      const { lockFlag, ...rest } = newData;
+      await usersApi.register(rest);
 
-  const applyFilters = useCallback(
-    (searchTerm, newFilters) => {
-      setLoading(true);
+      mutate((key) => Array.isArray(key) && key[0] === 'users');
+    } catch (error) {
+      console.error('Có lỗi khi tạo nhân viên:', error);
+    }
+  }, []);
 
-      const { role, status, dateFrom, dateTo } = newFilters;
+  const handleEdit = useCallback(async (editedData) => {
+    try {
+      await usersApi.updateUser(editedData.id, editedData);
 
-      setPagination((prev) => {
-        fetchData({ page: 0, size: prev.rowsPerPage, dateFrom, dateTo, searchTerm });
-        return {
-          ...prev,
-          page: 0,
-          rowsPerPage: prev.rowsPerPage
-        };
-      });
+      mutate((key) => Array.isArray(key) && key[0] === 'users');
+    } catch (error) {
+      console.error('Có lỗi khi cập nhật nhân viên:', error);
+    }
+  }, []);
 
-      setLoading(false);
-    },
-    [data]
-  );
+  const handleDelete = useCallback(async (itemToDelete) => {
+    try {
+      await usersApi.deleteUsers(itemToDelete);
 
-  const handleChangePage = useCallback(
-    (newPage) => {
-      setPagination((prev) => {
-        fetchData({ page: newPage, size: prev.rowsPerPage });
-        return {
-          ...prev,
-          page: newPage
-        };
-      });
-    },
-    [fetchData]
-  );
-
-  const handleChangeRowsPerPage = useCallback(
-    (newRowsPerPage) => {
-      setPagination((prev) => {
-        fetchData({ page: 0, size: newRowsPerPage });
-        return {
-          ...prev,
-          page: 0,
-          rowsPerPage: newRowsPerPage
-        };
-      });
-    },
-    [fetchData]
-  );
-  const handleCreate = useCallback(
-    async (newData) => {
-      try {
-        const response = await usersApi.register(newData);
-
-        if (!isSuccessCode(response.code)) {
-          showNotification(response.msg, 'error');
-        } else {
-          showNotification('Thêm nhân viên thành công', 'success');
-          await fetchData({ page: pagination.page, size: pagination.rowsPerPage });
-        }
-      } catch (error) {
-        console.error('Có lỗi khi tạo nhân viên:', error);
-        showNotification('Có lỗi xảy ra!', 'error');
-      }
-    },
-    [fetchData, pagination.page, pagination.rowsPerPage, searchTerm, filters]
-  );
-
-  const handleEdit = useCallback(
-    async (editedData) => {
-      console.log('editData', editedData);
-      try {
-        let response = await usersApi.updateUser(editedData.id, editedData);
-
-        if (!isSuccessCode(response.code)) {
-          showNotification(response.msg, 'error');
-        } else {
-          showNotification('Sửa nhân viên thành công', 'success');
-          await fetchData({ page: pagination.page, size: pagination.rowsPerPage });
-        }
-      } catch (error) {
-        console.error('Có lỗi khi cập nhật nhân viên:', error);
-        showNotification('Có lỗi xảy ra!', 'error');
-      }
-    },
-    [data, searchTerm, filters]
-  );
-
-  const handleDelete = useCallback(
-    async (itemToDelete) => {
-      try {
-        const response = await usersApi.deleteUsers(itemToDelete);
-
-        if (!isSuccessCode(response.code)) {
-          showNotification(response.msg, 'error');
-        } else {
-          showNotification('Xóa nhân viên thành công', 'success');
-          await fetchData({ page: pagination.page, size: pagination.rowsPerPage });
-        }
-      } catch (error) {
-        console.error('Có lỗi khi xóa nhân viên:', error);
-        showNotification('Có lỗi xảy ra!', 'error');
-      }
-    },
-    [data, searchTerm, filters]
-  );
+      mutate((key) => Array.isArray(key) && key[0] === 'users');
+    } catch (error) {
+      console.error('Có lỗi khi xóa nhân viên:', error);
+    }
+  }, []);
 
   // Render component
   return (
     <CustomDataPage
-      title="Quản Lý Nhân Viên"
-      data={filteredData}
+      title="Quản lý nhân viên"
+      data={data}
       columns={columns}
+      page="users"
       filterComponent={<UserAdvancedFilter onFilter={handleFilter} />}
       searchPlaceholder="Tìm kiếm theo tên, email, số điện thoại..."
       onSearch={handleSearch}
       onCreate={handleCreate}
       onEdit={handleEdit}
       onDelete={handleDelete}
-      permissions={{ create: true, edit: true, view: true, delete: true }}
+      permissions={{ assignRole: false, create: true, edit: true, view: true, delete: true }}
       showCheckbox={true}
       actionType="icon-text"
-      createComponent={(props) => <UserFormAction {...props} title="Thêm nhân viên mới" isView={false} onSubmit={handleCreate} />}
-      editComponent={(props) => <UserFormAction {...props} title="Chỉnh sửa nhân viên" isView={false} onSubmit={handleEdit} />}
-      viewComponent={(props) => <UserFormAction {...props} title="Xem chi tiết nhân viên" isView={true} />}
+      createComponent={(props) => (
+        <UserFormAction {...props} roleList={roleList.content} title="Thêm nhân viên mới" isView={false} onSubmit={handleCreate} />
+      )}
+      editComponent={(props) => (
+        <UserFormAction {...props} roleList={roleList.content} title="Chỉnh sửa nhân viên" isView={false} onSubmit={handleEdit} />
+      )}
+      viewComponent={(props) => <UserFormAction {...props} roleList={roleList.content} title="Xem chi tiết nhân viên" isView={true} />}
       collapsible={false}
       loading={loading}
-      paginatePage={handleChangePage}
-      onChangion={pagination}
+      onChangePage={handleChangePage}
+      pagination={{
+        ...pagination,
+        totalItems
+      }}
       onChangeRowsPerPage={handleChangeRowsPerPage}
       enableSearch={true}
       enableFilter={true}

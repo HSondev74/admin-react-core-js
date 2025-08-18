@@ -17,7 +17,7 @@ import Grow from '@mui/material/Grow';
 // project imports
 import IconButton from '../../../../../@extended/IconButton';
 
-import { handlerDrawerOpen, useGetMenuMaster } from '../../../../../../../infrastructure/api/http/menu';
+import { handlerDrawerOpen, useGetMenuMaster } from '../../../../../../../infrastructure/utils/menu';
 
 // Icon ant design
 import { DownOutlined } from '@ant-design/icons';

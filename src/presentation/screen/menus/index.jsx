@@ -8,7 +8,7 @@ import MenuAdvancedFilter from './MenuAdvancedFilter';
 import { getMenuColumns } from './menuColumns';
 import { listMenus as listMenusUtil } from './menuUtils';
 // Api
-import menuApi from '../../../infrastructure/api/http/menuApi';
+import menuApi from '../../../infrastructure/api/http/menu';
 
 // List menu tree for table display with expand/collapse support
 const listMenus = (menus, level = 0, expandedItems = []) => {

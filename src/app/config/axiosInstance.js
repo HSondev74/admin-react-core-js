@@ -1,7 +1,6 @@
 import axios from 'axios';
-import { getToken, getRefreshToken, setToken, clearAuthData } from '../../infrastructure/utils/authToken';
 import { enqueueSnackbar } from 'notistack';
-import { getCookie, setCookie } from '../utils/cookies';
+import { getCookie, setCookie, removeCookie } from '../utils/cookies';
 
 let reduxStore = null;
 let reduxDispatch = null;
@@ -18,9 +17,9 @@ const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   timeout: 30000, // 30 seconds
   headers: {
+    Accept: 'application/json',
     'Content-Type': 'application/json',
-    'X-Requested-With': 'XMLHttpRequest',
-    'Cache-Control': 'no-cache'
+    'Accept-Language': 'vi'
   },
   withCredentials: true
 });
@@ -63,9 +62,6 @@ axiosInstance.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // Add request timestamp
-    config.headers['X-Request-Timestamp'] = new Date().toISOString();
-
     return config;
   },
   (error) => {
@@ -83,9 +79,9 @@ axiosInstance.interceptors.response.use(
     });
 
     // Handle custom success messages from API
-    if (response.data?.message) {
-      enqueueSnackbar(response.data.message, { variant: 'success' });
-    }
+    // if (response.data?.message) {
+    //   enqueueSnackbar(response.data.message, { variant: 'success' });
+    // }
 
     return response;
   },

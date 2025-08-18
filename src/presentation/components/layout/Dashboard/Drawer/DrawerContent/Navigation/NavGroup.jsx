@@ -6,7 +6,7 @@ import Box from '@mui/material/Box';
 
 // project import
 import NavItem from './NavItem';
-import { useGetMenuMaster } from '../../../../../../../infrastructure/api/http/menu';
+import { useGetMenuMaster } from '../../../../../../../infrastructure/utils/menu';
 
 export default function NavGroup({ item }) {
   console.log('item navgroup', item);
