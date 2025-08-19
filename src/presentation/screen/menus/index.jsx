@@ -6,7 +6,6 @@ import MenuFormAction from './MenuFormAction';
 import MenuAdvancedFilter from './MenuAdvancedFilter';
 // Utils and handlers
 import { getMenuColumns } from './menuColumns';
-import { listMenus as listMenusUtil } from './menuUtils';
 // Api
 import menuApi from '../../../infrastructure/api/http/menu';
 
@@ -232,10 +231,28 @@ export default function MenuManagement() {
 
       const targetItem = flatMenus[targetIndex];
 
+      // Update sort order via API
       await menuApi.updateSortOrder(sourceItem.item.id, targetItem.item.id, direction, 1);
 
-      // Refresh data after successful update
-      await loadMenus();
+      // Update local state instead of reloading
+      const updateSortOrderInTree = (menuList) => {
+        return menuList.map((menu) => {
+          if (menu.item.id === sourceItem.item.id) {
+            return { ...menu, item: { ...menu.item, sortOrder: targetItem.item.sortOrder } };
+          }
+          if (menu.item.id === targetItem.item.id) {
+            return { ...menu, item: { ...menu.item, sortOrder: sourceItem.item.sortOrder } };
+          }
+          if (menu.children) {
+            return { ...menu, children: updateSortOrderInTree(menu.children) };
+          }
+          return menu;
+        });
+      };
+
+      const updatedMenus = updateSortOrderInTree(menus);
+      setMenus(updatedMenus);
+      setFilteredMenus(updateSortOrderInTree(filteredMenus));
     } catch (error) {
       console.error('Error updating sort order:', error);
     }
