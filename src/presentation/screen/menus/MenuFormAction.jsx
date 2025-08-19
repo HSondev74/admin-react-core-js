@@ -33,6 +33,18 @@ const MenuFormAction = ({ item, parentId, onClose, onSubmit, title, isView }) =>
   const [loading, setLoading] = useState(false);
   const isUpdate = !!item;
 
+  // Get icon data from JSON file
+  const getIconData = async (iconName) => {
+    try {
+      const response = await fetch('/icons.json');
+      const icons = await response.json();
+      return icons.find((icon) => icon.name === iconName);
+    } catch (error) {
+      console.error('Error loading icon data:', error);
+      return null;
+    }
+  };
+
   const MenuProps = {
     PaperProps: {
       style: {
@@ -61,13 +73,13 @@ const MenuFormAction = ({ item, parentId, onClose, onSubmit, title, isView }) =>
     try {
       const response = await menuApi.getMenuById(item.id);
       const menuData = response.data;
-      
+
       // If parentId is not in response, find it from menu tree
       if (!menuData.parentId && availableMenus.length > 0) {
         const foundParentId = findParentId(availableMenus, item.id);
         menuData.parentId = foundParentId;
       }
-      
+
       setMenu(menuData);
     } catch (err) {
       console.error('Lỗi khi gọi API:', err);
@@ -105,23 +117,25 @@ const MenuFormAction = ({ item, parentId, onClose, onSubmit, title, isView }) =>
   const handleSubmit = async (values, { setSubmitting, setFieldError }) => {
     try {
       setSubmitting(true);
-      
+
       // Clean up data for API
       const formData = { ...values };
-      
+
       // Remove id for create operation
       if (!isUpdate) {
         delete formData.id;
       }
-      
-      // Remove empty icon field
-      if (!formData.icon) {
+
+      // Format icon to fa-{style} fa-{name} or remove if empty
+      if (formData.icon) {
+        // Get icon data to determine style
+        const iconData = await getIconData(formData.icon);
+        const style = iconData?.style || 'solid';
+        formData.icon = `fa-${style} fa-${formData.icon}`;
+      } else {
         delete formData.icon;
       }
-      
-      // Debug: Log cleaned data
-      console.log('Cleaned form data:', formData);
-      
+
       if (isUpdate) {
         // Update existing menu
         await menuApi.updateMenuItem(formData, formData.id);
@@ -129,12 +143,12 @@ const MenuFormAction = ({ item, parentId, onClose, onSubmit, title, isView }) =>
         // Create new menu
         await menuApi.addNewMenuItem(formData);
       }
-      
+
       // Refresh menu data if available
       if (window.refreshMenuData) {
         await window.refreshMenuData();
       }
-      
+
       onClose();
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -146,6 +160,14 @@ const MenuFormAction = ({ item, parentId, onClose, onSubmit, title, isView }) =>
   };
 
   const menuItem = menu?.item || menu;
+
+  // Parse icon from fa-{style} fa-{name} format to just {name}
+  const parseIcon = (iconString) => {
+    if (!iconString) return '';
+    const match = iconString.match(/fa-\w+ fa-(.+)/);
+    return match ? match[1] : iconString;
+  };
+
   const initialValues = {
     id: menuItem?.id || 0,
     name: menuItem?.name || '',
@@ -154,7 +176,7 @@ const MenuFormAction = ({ item, parentId, onClose, onSubmit, title, isView }) =>
     menuType: menuItem?.menuType || '',
     roleIds: Array.isArray(menuItem?.roles) ? menuItem.roles : [],
     sortOrder: menuItem?.sortOrder || 0,
-    icon: menuItem?.icon || ''
+    icon: parseIcon(menuItem?.icon) || ''
   };
 
   const validationSchema = !isView
