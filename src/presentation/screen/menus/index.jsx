@@ -95,7 +95,23 @@ export default function MenuManagement() {
     try {
       const id = Array.isArray(ids) ? ids[0] : ids;
       await menuApi.deleteMenuItem(id);
-      await loadMenus(); // Refresh data after delete
+      
+      // Remove item from local state instead of reloading
+      const removeFromTree = (menuList) => {
+        return menuList.filter((menu) => {
+          if (menu.item.id === id) {
+            return false; // Remove this item
+          }
+          if (menu.children) {
+            menu.children = removeFromTree(menu.children);
+          }
+          return true;
+        });
+      };
+      
+      const updatedMenus = removeFromTree(menus);
+      setMenus(updatedMenus);
+      setFilteredMenus(removeFromTree(filteredMenus));
     } catch (error) {
       console.error('Error deleting menu:', error);
     }

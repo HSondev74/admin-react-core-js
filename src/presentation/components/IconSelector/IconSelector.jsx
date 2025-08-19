@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, TextField, InputAdornment, Grid, IconButton, Tooltip, Popover, Paper } from '@mui/material';
+import { Box, TextField, InputAdornment, Grid, IconButton, Popover, Paper } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { formStyles, formViewStyles } from '../../assets/styles/formStyles';
 
@@ -110,43 +110,39 @@ const IconSelector = ({ label, value, onChange, disabled, error, isView }) => {
           <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
             <Grid container spacing={0.5}>
               <Grid item>
-                <Tooltip title="Không chọn icon">
+                <IconButton
+                  onClick={() => handleIconSelect('')}
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    border: '1px solid #e0e0e0',
+                    borderRadius: 1,
+                    bgcolor: !value ? 'primary.light' : 'transparent',
+                    '&:hover': {
+                      bgcolor: 'primary.light'
+                    }
+                  }}
+                >
+                  ✕
+                </IconButton>
+              </Grid>
+              {filteredIcons.slice(0, 200).map((icon) => (
+                <Grid item key={icon.name}>
                   <IconButton
-                    onClick={() => handleIconSelect('')}
+                    onClick={() => handleIconSelect(icon.name)}
                     sx={{
                       width: 36,
                       height: 36,
                       border: '1px solid #e0e0e0',
                       borderRadius: 1,
-                      bgcolor: !value ? 'primary.light' : 'transparent',
+                      bgcolor: value === icon.name ? 'primary.light' : 'transparent',
                       '&:hover': {
                         bgcolor: 'primary.light'
                       }
                     }}
                   >
-                    ✕
+                    {renderIcon(icon.svg)}
                   </IconButton>
-                </Tooltip>
-              </Grid>
-              {filteredIcons.slice(0, 200).map((icon) => (
-                <Grid item key={icon.name}>
-                  <Tooltip title={icon.name}>
-                    <IconButton
-                      onClick={() => handleIconSelect(icon.name)}
-                      sx={{
-                        width: 36,
-                        height: 36,
-                        border: '1px solid #e0e0e0',
-                        borderRadius: 1,
-                        bgcolor: value === icon.name ? 'primary.light' : 'transparent',
-                        '&:hover': {
-                          bgcolor: 'primary.light'
-                        }
-                      }}
-                    >
-                      {renderIcon(icon.svg)}
-                    </IconButton>
-                  </Tooltip>
                 </Grid>
               ))}
             </Grid>

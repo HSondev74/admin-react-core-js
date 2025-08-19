@@ -7,7 +7,7 @@ import ListItemText from '@mui/material/ListItemText';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import Checkbox from '@mui/material/Checkbox';
 
-const CustomSelectField = ({ label, name, value, onChange, options, multiple = false }) => {
+const CustomSelectField = ({ label, name, value, onChange, options, multiple = false, MenuProps }) => {
   return (
     <FormControl fullWidth size="small">
       <InputLabel>{label}</InputLabel>
@@ -19,6 +19,7 @@ const CustomSelectField = ({ label, name, value, onChange, options, multiple = f
         multiple={multiple}
         input={multiple ? <OutlinedInput label={label} /> : undefined}
         renderValue={multiple ? (selected) => selected.map((val) => options.find((opt) => opt.value === val)?.label).join(', ') : undefined}
+        MenuProps={MenuProps}
       >
         {options.map((opt) => (
           <MenuItem key={opt.value} value={opt.value}>

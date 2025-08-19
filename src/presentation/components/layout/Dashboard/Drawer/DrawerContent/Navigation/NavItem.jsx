@@ -14,6 +14,7 @@ import Box from '@mui/material/Box';
 import Fade from '@mui/material/Fade';
 import Popper from '@mui/material/Popper';
 import Grow from '@mui/material/Grow';
+import Tooltip from '@mui/material/Tooltip';
 // project imports
 import IconButton from '../../../../../@extended/IconButton';
 
@@ -50,16 +51,27 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
   };
 
   const Icon = item.icon;
-  const itemIcon = item.icon ? (
-    <Icon
-      style={{
-        fontSize: drawerOpen ? '1rem' : '1.25rem',
-        ...(isParents && { fontSize: 20, stroke: '1.5' })
-      }}
-    />
-  ) : (
-    false
-  );
+  // Dựa vào cấu trúc dữ liệu thực tế
+  const actualItem = item.item || item;
+  const isChildItem = !!actualItem.parentId;
+  console.log('NavItem Debug:', {
+    title: item.title || actualItem.name,
+    level,
+    parentId: actualItem.parentId,
+    isChildItem,
+    actualItem
+  });
+  const itemIcon =
+    item.icon && !isChildItem ? (
+      <Icon
+        style={{
+          fontSize: drawerOpen ? '1rem' : '1.25rem',
+          ...(isParents && { fontSize: 20, stroke: '1.5' })
+        }}
+      />
+    ) : (
+      false
+    );
 
   const { pathname } = useLocation();
   const path = item?.link || item?.url || '';
@@ -80,9 +92,11 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
   // Condition dynamic dashboard (popup)
   const [showSubMenu, setShowSubMenu] = useState(false);
   const [isHoverable, setIsHoverable] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
   const hoverTimeoutRef = useRef(null);
 
   const handleMouseEnter = () => {
+    setIsHovered(true);
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
     }
@@ -93,6 +107,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
   };
 
   const handleMouseLeave = () => {
+    setIsHovered(false);
     setIsHoverable(false);
 
     if (hoverTimeoutRef.current) {
@@ -116,7 +131,13 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
   return (
     <>
       <Box sx={{ position: 'relative' }}>
-        <ListItemButton
+        <Tooltip 
+          title={item.title} 
+          placement="right" 
+          disableHoverListener={drawerOpen || hasChild}
+          arrow
+        >
+          <ListItemButton
           ref={buttonRef}
           component={Link}
           to={item.url}
@@ -128,7 +149,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
           onMouseLeave={handleMouseLeave}
           sx={(theme) => ({
             zIndex: 1201,
-            pl: drawerOpen ? `${level * 28}px` : 1.5,
+            pl: drawerOpen ? `${level * 24}px` : 1.5,
             py: !drawerOpen && level === 1 ? 1.25 : 1,
             ...(drawerOpen && {
               '&:hover': { bgcolor: 'primary.lighter', ...theme.applyStyles('dark', { bgcolor: 'divider' }) },
@@ -138,7 +159,11 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
                 borderRight: '2px solid',
                 borderColor: 'primary.main',
                 color: iconSelectedColor,
-                '&:hover': { color: iconSelectedColor, bgcolor: 'primary.lighter', ...theme.applyStyles('dark', { bgcolor: 'divider' }) }
+                '&:hover': {
+                  color: iconSelectedColor,
+                  bgcolor: 'primary.lighter',
+                  ...theme.applyStyles('dark', { bgcolor: 'divider' })
+                }
               }
             }),
             ...(!drawerOpen && {
@@ -147,7 +172,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
             })
           })}
         >
-          {itemIcon && level === 1 && (
+          {itemIcon && level === 1 && !isChildItem && (
             <ListItemIcon
               sx={(theme) => ({
                 minWidth: 28,
@@ -205,7 +230,13 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
             <ListItemText
               primary={
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="h6" sx={{ color: isSelected ? iconSelectedColor : textColor }}>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color: isSelected || isHovered ? '#1677ff' : textColor,
+                      transition: 'color 0.2s'
+                    }}
+                  >
                     {item.title}
                   </Typography>
 
@@ -246,6 +277,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
             </Fade>
           )}
         </ListItemButton>
+        </Tooltip>
 
         {/* Collapse for open drawer */}
         {drawerOpen && hasChild && (
@@ -253,7 +285,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
             <Box>
               {item.children.map((child, id) => {
                 if (child.type !== 'button') {
-                  return <NavItem key={id} item={child} level={level} isParents={false} setSelectedID={setSelectedID} />;
+                  return <NavItem key={id} item={child} level={level + 1} isParents={false} setSelectedID={setSelectedID} />;
                 }
               })}
             </Box>

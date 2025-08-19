@@ -24,6 +24,7 @@ const transformMenuData = (apiData) => {
       type: 'item',
       url: menuItem.item.path,
       icon: getIconComponent(menuItem.item.icon),
+      parentId: menuItem.item.parentId,
       breadcrumbs: false,
       children: menuItem.children?.length > 0 ? transformMenuData({ data: menuItem.children }) : undefined
     }));

@@ -22,9 +22,8 @@ const MenuAdvancedFilter = ({ availableRoles, onFilter }) => {
               onChange={handleChange}
               options={[
                 { label: 'Tất cả', value: '' },
-                { label: 'Parent', value: 'Parent' },
-                { label: 'Child', value: 'Child' },
-                { label: 'Single', value: 'Single' }
+                { label: 'Danh sách', value: 'MENU' },
+                { label: 'Nút', value: 'BUTTON' }
               ]}
             />
           </Grid>
@@ -43,9 +42,9 @@ const MenuAdvancedFilter = ({ availableRoles, onFilter }) => {
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={3}>
             <CustomSelectField
-              label="Quyền"
+              label="Vai trò"
               name="roles"
               value={filters.roles}
               onChange={(e) => handleChange({ target: { name: 'roles', value: e.target.value } })}
@@ -57,6 +56,14 @@ const MenuAdvancedFilter = ({ availableRoles, onFilter }) => {
                 }))
               ]}
               multiple
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: 300,
+                    overflow: 'auto'
+                  }
+                }
+              }}
             />
           </Grid>
         </>
