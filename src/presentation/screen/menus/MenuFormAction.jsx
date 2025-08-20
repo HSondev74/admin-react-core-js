@@ -56,34 +56,43 @@ const MenuFormAction = ({ item, parentId, onClose, onSubmit, title, isView }) =>
     return null;
   };
 
-  // get menu detail by id
-  const fetchMenuDetail = async () => {
+  // get menu roles by id
+  const fetchMenuRoles = async () => {
     try {
-      const response = await menuApi.getMenuById(item.id);
-      const menuData = response.data;
+      const menuId = item?.item?.id || item?.id;
 
-      // If parentId is not in response, find it from menu tree
-      if (!menuData.parentId && availableMenus.length > 0) {
-        const foundParentId = findParentId(availableMenus, item.id);
-        menuData.parentId = foundParentId;
+      if (!menuId) {
+        console.error('No menu ID found');
+        return;
+      }
+
+      // Use existing item data
+      const menuData = { ...(item?.item || item) };
+
+      // Try to get roles
+      try {
+        const rolesResponse = await menuApi.getRolesMenu(menuId);
+        menuData.roles = rolesResponse.data || [];
+      } catch (roleError) {
+        console.warn('Could not fetch roles for menu:', roleError);
+        menuData.roles = [];
       }
 
       setMenu(menuData);
     } catch (err) {
       console.error('Lỗi khi gọi API:', err);
+      // Fallback to use existing item data
+      setMenu(item?.item || item);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!item || !isView) {
-      return;
+    if (item && isUpdate) {
+      fetchMenuRoles();
     }
-    if (availableMenus.length > 0) {
-      fetchMenuDetail();
-    }
-  }, [item, isView, availableMenus]);
+  }, [item, isUpdate]);
 
   // Load roles and menus
   useEffect(() => {
