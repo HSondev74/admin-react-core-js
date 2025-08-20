@@ -69,11 +69,11 @@ export const getMenuColumns = (expandedItems, onToggleExpand, onSortOrder, flatM
     label: 'Loại',
     minWidth: 100,
     align: 'center',
-    render: (vaue, row) => {
+    render: (value, row) => {
       const menuType = row.item.menuType || 'Unknown';
       return (
         <Typography variant="body2" sx={{ fontSize: '0.9rem' }}>
-          {menuType === 'MENU' ? 'Danh sách' : 'Nút'}
+          {menuType === 'MENU' ? 'Danh sách' : menuType === 'BUTTON' ? 'Nút' : menuType}
         </Typography>
       );
     }
@@ -94,7 +94,7 @@ export const getMenuColumns = (expandedItems, onToggleExpand, onSortOrder, flatM
             <IconButton 
               size="small" 
               sx={{ p: 0.25 }}
-              onClick={() => onSortOrder && onSortOrder(row, 'UP')}
+              onClick={(event) => onSortOrder && onSortOrder(row, 'UP', event)}
               disabled={!onSortOrder}
             >
               <ArrowUpward sx={{ fontSize: 16 }} />
@@ -104,7 +104,7 @@ export const getMenuColumns = (expandedItems, onToggleExpand, onSortOrder, flatM
             <IconButton 
               size="small" 
               sx={{ p: 0.25 }}
-              onClick={() => onSortOrder && onSortOrder(row, 'DOWN')}
+              onClick={(event) => onSortOrder && onSortOrder(row, 'DOWN', event)}
               disabled={!onSortOrder}
             >
               <ArrowDownward sx={{ fontSize: 16 }} />

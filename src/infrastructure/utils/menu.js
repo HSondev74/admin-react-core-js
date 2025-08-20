@@ -21,7 +21,7 @@ const transformMenuData = (apiData) => {
     .map((menuItem) => ({
       id: menuItem.item.id,
       title: menuItem.item.name,
-      type: 'item',
+      type: menuItem.item.menuType,
       url: menuItem.item.path,
       icon: getIconComponent(menuItem.item.icon),
       parentId: menuItem.item.parentId,

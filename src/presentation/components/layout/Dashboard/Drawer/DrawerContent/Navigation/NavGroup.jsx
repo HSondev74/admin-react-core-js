@@ -22,7 +22,7 @@ export default function NavGroup({ item }) {
             collapse - only available in paid version
           </Typography>
         );
-      case 'item':
+      case 'MENU':
         return <NavItem key={menuItem.id} item={menuItem} level={1} />;
       default:
         return (

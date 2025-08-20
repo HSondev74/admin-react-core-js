@@ -355,12 +355,14 @@ const CustomDataTable = ({
                     (collapsible ? 1 : 0) +
                     (permissions.edit || permissions.view || permissions.delete ? 1 : 0)
                   }
-                  align="left"
+                  align="center"
                 >
-                  <CircularProgress size={40} />
-                  <Typography variant="body2" sx={{ mt: 1 }}>
-                    Đang tải dữ liệu...
-                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4 }}>
+                    <CircularProgress size={40} />
+                    <Typography variant="body2" sx={{ mt: 1 }}>
+                      Đang tải dữ liệu...
+                    </Typography>
+                  </Box>
                 </TableCell>
               </TableRow>
             ) : data.length === 0 ? (
@@ -372,9 +374,9 @@ const CustomDataTable = ({
                     (collapsible ? 1 : 0) +
                     (permissions.edit || permissions.view || permissions.delete ? 1 : 0)
                   }
-                  align="left"
+                  align="center"
                 >
-                  <Typography variant="body2">Không có dữ liệu</Typography>
+                  <Typography variant="body2" sx={{ py: 4 }}>Không có dữ liệu</Typography>
                 </TableCell>
               </TableRow>
             ) : (

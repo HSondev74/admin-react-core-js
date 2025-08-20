@@ -35,6 +35,12 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
   const drawerOpen = menuMaster.isDashboardDrawerOpened;
   console.log('item navitem', item);
 
+  // Don't render BUTTON type items in sidebar
+  const actualItem = item.item || item;
+  if (actualItem.menuType === 'BUTTON' || actualItem.type === 'BUTTON') {
+    return null;
+  }
+
   const downLG = useMediaQuery((theme) => theme.breakpoints.down('lg'));
 
   let itemTarget = '_self';
@@ -51,8 +57,6 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
   };
 
   const Icon = item.icon;
-  // Dựa vào cấu trúc dữ liệu thực tế
-  const actualItem = item.item || item;
   const isChildItem = !!actualItem.parentId;
   console.log('NavItem Debug:', {
     title: item.title || actualItem.name,
@@ -86,9 +90,9 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
    */
   const [isOpen, setIsOpen] = useState(false);
   const hasChild = Array.isArray(item.children) && item.children.length > 0;
-  const showIcon = Array.isArray(item.children) && item.children.length > 0 && !item.children.every((child) => child.type === 'button');
-  const isSubMenu = hasChild && item.children.some((child) => child.type !== 'button');
-
+  const showIcon = Array.isArray(item.children) && item.children.length > 0 && !item.children.every((child) => (child.item?.menuType || child.menuType || child.type) === 'BUTTON');
+  const isSubMenu = hasChild && item.children.some((child) => (child.item?.menuType || child.menuType || child.type) !== 'BUTTON');
+  console.log('isSubMenu', item.children);
   // Condition dynamic dashboard (popup)
   const [showSubMenu, setShowSubMenu] = useState(false);
   const [isHoverable, setIsHoverable] = useState(true);
@@ -216,7 +220,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
                       }}
                     >
                       <NavSubMenu
-                        items={item.children.filter((child) => child.type != 'button')}
+                        items={item.children.filter((child) => (child.item?.menuType || child.menuType || child.type) !== 'BUTTON')}
                         level={level + 1}
                         setSelectedID={setSelectedID}
                         parentTitle={level === 1 ? item.title : undefined}
@@ -286,9 +290,11 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
           <Collapse in={isOpen} timeout="auto" unmountOnExit>
             <Box>
               {item.children.map((child, id) => {
-                if (child.type !== 'button') {
+                const childMenuType = child.item?.menuType || child.menuType || child.type;
+                if (childMenuType !== 'BUTTON') {
                   return <NavItem key={id} item={child} level={level + 1} isParents={false} setSelectedID={setSelectedID} />;
                 }
+                return null;
               })}
             </Box>
           </Collapse>

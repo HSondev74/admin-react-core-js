@@ -38,21 +38,54 @@ export default function MenuManagement() {
   const [activeFilters, setActiveFilters] = useState({});
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
   const [expandedItems, setExpandedItems] = useState([]);
 
-  // Load menu tree data
-  const loadMenus = async () => {
+  // Load menu data with filters
+  const loadMenus = async (pageNum = page, pageSize = rowsPerPage, search = searchTerm, filters = activeFilters) => {
     try {
       setLoading(true);
-      const response = await menuApi.getAllMenuTree();
-      let menuData = [];
-      if (response && Array.isArray(response.data)) {
-        menuData = response.data;
-      } else if (response && Array.isArray(response)) {
-        menuData = response;
+      let response;
+
+      // Check if any meaningful filters are applied
+      const hasMenuTypeFilter = filters.menuType && filters.menuType !== '';
+      const hasParentIdFilter = filters.parentId && filters.parentId !== '' && filters.parentId !== 'null';
+
+      // Use specific API based on filters
+      if (hasMenuTypeFilter && !hasParentIdFilter) {
+        response = await menuApi.getMenusByTypeMenu(filters.menuType);
+      } else if (hasParentIdFilter && !hasMenuTypeFilter) {
+        response = await menuApi.getMenusByParentId(filters.parentId);
+      } else {
+        // Default: use paginated API when no filters or both filters are "Tất cả"
+        const requestBody = {
+          page: pageNum + 1,
+          size: pageSize,
+          sortBy: 'sortOrder',
+          searchTerm: search || '',
+          sortDirection: 'ASC',
+          visible: 'string'
+        };
+        response = await menuApi.getMenusPaginated(requestBody);
       }
+
+      let menuData = [];
+      let totalItems = 0;
+
+      if (response && response.data) {
+        // Handle different response structures
+        if (Array.isArray(response.data)) {
+          menuData = response.data;
+          totalItems = response.data.length;
+        } else {
+          menuData = response.data.content || response.data.data || [];
+          totalItems = response.data.totalElements || response.data.total || menuData.length;
+        }
+      }
+
       setMenus(menuData);
       setFilteredMenus(menuData);
+      setTotalItems(totalItems);
       setError(null);
     } catch (err) {
       console.error('Error loading menus:', err);
@@ -95,132 +128,53 @@ export default function MenuManagement() {
     try {
       const id = Array.isArray(ids) ? ids[0] : ids;
       await menuApi.deleteMenuItem(id);
-      
-      // Remove item from local state instead of reloading
-      const removeFromTree = (menuList) => {
-        return menuList.filter((menu) => {
-          if (menu.item.id === id) {
-            return false; // Remove this item
-          }
-          if (menu.children) {
-            menu.children = removeFromTree(menu.children);
-          }
-          return true;
-        });
-      };
-      
-      const updatedMenus = removeFromTree(menus);
-      setMenus(updatedMenus);
-      setFilteredMenus(removeFromTree(filteredMenus));
+
+      // Reload data after delete
+      loadMenus(page, rowsPerPage, searchTerm, activeFilters);
     } catch (error) {
       console.error('Error deleting menu:', error);
     }
   };
 
-  // Apply filters and search
-  const applyFilters = (searchValue = searchTerm, filters = activeFilters) => {
-    let result = [...menus];
-
-    // Apply search filter
-    if (searchValue?.trim()) {
-      const filterMenus = (menuList) => {
-        const filtered = [];
-        menuList.forEach((menu) => {
-          const item = menu.item;
-          const matchesSearch =
-            item.name?.toLowerCase().includes(searchValue.toLowerCase()) ||
-            item.path?.toLowerCase().includes(searchValue.toLowerCase()) ||
-            item.menuType?.toLowerCase().includes(searchValue.toLowerCase());
-
-          if (matchesSearch) {
-            filtered.push(menu);
-          } else if (menu.children && menu.children.length > 0) {
-            const filteredChildren = filterMenus(menu.children);
-            if (filteredChildren.length > 0) {
-              filtered.push({ ...menu, children: filteredChildren });
-            }
-          }
-        });
-        return filtered;
-      };
-      result = filterMenus(result);
-    }
-
-    // Apply advanced filters
-    if (filters && Object.keys(filters).length > 0) {
-      const filterByAdvanced = (menuList) => {
-        return menuList
-          .filter((menu) => {
-            const item = menu.item;
-            let matches = true;
-
-            if (filters.menuType && filters.menuType !== '') {
-              matches = matches && item.menuType === filters.menuType;
-            }
-
-            if (filters.hasChildren && filters.hasChildren !== '') {
-              const hasChildren = menu.children && menu.children.length > 0;
-              matches = matches && (filters.hasChildren === 'true' ? hasChildren : !hasChildren);
-            }
-
-            if (filters.roles && Array.isArray(filters.roles) && filters.roles.length > 0) {
-              const itemRoles = item.roles || [];
-              matches = matches && filters.roles.some((roleId) => itemRoles.includes(roleId));
-            }
-
-            return matches;
-          })
-          .map((menu) => ({
-            ...menu,
-            children: menu.children ? filterByAdvanced(menu.children) : []
-          }));
-      };
-      result = filterByAdvanced(result);
-    }
-
-    setFilteredMenus(result);
-    setPage(0); // Reset to first page when filters change
-  };
-
   // Search functionality
   const handleSearch = (searchValue) => {
     setSearchTerm(searchValue);
-    applyFilters(searchValue, activeFilters);
+    setPage(0);
+    loadMenus(0, rowsPerPage, searchValue, activeFilters);
   };
 
   // Advanced filter functionality
   const handleAdvancedFilter = (filters) => {
     setActiveFilters(filters);
-    applyFilters(searchTerm, filters);
+    setPage(0);
+    loadMenus(0, rowsPerPage, searchTerm, filters);
   };
-
-  // Re-apply filters when menus data changes
-  useEffect(() => {
-    if (menus.length > 0) {
-      applyFilters(searchTerm, activeFilters);
-    }
-  }, [menus]);
 
   // Pagination handlers
   const handleChangePage = (newPage) => {
     setPage(newPage);
+    loadMenus(newPage, rowsPerPage, searchTerm, activeFilters);
   };
 
   const handleChangeRowsPerPage = (newRowsPerPage) => {
     setRowsPerPage(newRowsPerPage);
     setPage(0);
+    loadMenus(0, newRowsPerPage, searchTerm, activeFilters);
   };
 
-  // Get paginated data
+  // Get data with expand/collapse support
   const getPaginatedData = () => {
-    const flatMenus = listMenus(filteredMenus, 0, expandedItems);
-    const startIndex = page * rowsPerPage;
-    const endIndex = startIndex + rowsPerPage;
-    return flatMenus.slice(startIndex, endIndex);
-  };
-
-  const getTotalItems = () => {
-    return listMenus(filteredMenus, 0, expandedItems).length;
+    const processedMenus = menus.map((item) => {
+      // If item already has .item property (nested), use as is
+      if (item.item) {
+        return { ...item, level: 0, id: item.item.id };
+      }
+      // If item is flat, wrap it
+      return { item, level: 0, children: [], id: item.id };
+    });
+    
+    // Use listMenus function to handle expand/collapse
+    return listMenus(processedMenus, 0, expandedItems);
   };
 
   // Handle expand/collapse
@@ -229,9 +183,14 @@ export default function MenuManagement() {
   };
 
   // Handle sort order change
-  const handleSortOrder = async (sourceItem, direction) => {
+  const handleSortOrder = async (sourceItem, direction, event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
     try {
-      const flatMenus = listMenus(filteredMenus, 0, expandedItems);
+      const flatMenus = getPaginatedData();
       const currentIndex = flatMenus.findIndex((menu) => menu.item.id === sourceItem.item.id);
 
       let targetIndex;
@@ -250,37 +209,20 @@ export default function MenuManagement() {
       // Update sort order via API
       await menuApi.updateSortOrder(sourceItem.item.id, targetItem.item.id, direction, 1);
 
-      // Update local state instead of reloading
-      const updateSortOrderInTree = (menuList) => {
-        return menuList.map((menu) => {
-          if (menu.item.id === sourceItem.item.id) {
-            return { ...menu, item: { ...menu.item, sortOrder: targetItem.item.sortOrder } };
-          }
-          if (menu.item.id === targetItem.item.id) {
-            return { ...menu, item: { ...menu.item, sortOrder: sourceItem.item.sortOrder } };
-          }
-          if (menu.children) {
-            return { ...menu, children: updateSortOrderInTree(menu.children) };
-          }
-          return menu;
-        });
-      };
-
-      const updatedMenus = updateSortOrderInTree(menus);
-      setMenus(updatedMenus);
-      setFilteredMenus(updateSortOrderInTree(filteredMenus));
+      // Reload data after sort
+      loadMenus(page, rowsPerPage, searchTerm, activeFilters);
     } catch (error) {
       console.error('Error updating sort order:', error);
     }
   };
 
-  // Get columns configuration with sort logic
-  const getColumnsWithSortLogic = () => {
-    const flatMenus = listMenus(filteredMenus, 0, expandedItems);
+  // Get columns with sort functionality
+  const getColumnsWithSort = () => {
+    const flatMenus = getPaginatedData();
     return getMenuColumns(expandedItems, handleToggleExpand, handleSortOrder, flatMenus);
   };
 
-  const columns = getColumnsWithSortLogic();
+  const columns = getColumnsWithSort();
 
   if (error) {
     return (
@@ -310,7 +252,7 @@ export default function MenuManagement() {
           view: false,
           delete: true
         }}
-        pagination={{ page, rowsPerPage, totalItems: getTotalItems() }}
+        pagination={{ page, rowsPerPage, totalItems }}
         onChangePage={handleChangePage}
         onChangeRowsPerPage={handleChangeRowsPerPage}
         onDelete={handleDelete}

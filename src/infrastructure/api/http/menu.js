@@ -97,6 +97,36 @@ class MenuApi extends BaseApi {
       throw error;
     }
   }
+
+  async getMenusPaginated(requestBody) {
+    try {
+      const response = await this.post('/tree', requestBody);
+      return response.data;
+    } catch (error) {
+      console.error('Menu API error:', error);
+      throw error;
+    }
+  }
+
+  async getMenusByParentId(parentId) {
+    try {
+      const response = await this.get(`/type/parent/${parentId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Menu API error:', error);
+      throw error;
+    }
+  }
+
+  async getMenusByTypeMenu(menuType) {
+    try {
+      const response = await this.get(`/type/${menuType}`);
+      return response.data;
+    } catch (error) {
+      console.error('Menu API error:', error);
+      throw error;
+    }
+  }
 }
 
 const menuApi = new MenuApi();

@@ -33,18 +33,6 @@ const MenuFormAction = ({ item, parentId, onClose, onSubmit, title, isView }) =>
   const [loading, setLoading] = useState(false);
   const isUpdate = !!item;
 
-  // Get icon data from JSON file
-  const getIconData = async (iconName) => {
-    try {
-      const response = await fetch('/icons.json');
-      const icons = await response.json();
-      return icons.find((icon) => icon.name === iconName);
-    } catch (error) {
-      console.error('Error loading icon data:', error);
-      return null;
-    }
-  };
-
   const MenuProps = {
     PaperProps: {
       style: {
@@ -126,13 +114,8 @@ const MenuFormAction = ({ item, parentId, onClose, onSubmit, title, isView }) =>
         delete formData.id;
       }
 
-      // Format icon to fa-{style} fa-{name} or remove if empty
-      if (formData.icon) {
-        // Get icon data to determine style
-        const iconData = await getIconData(formData.icon);
-        const style = iconData?.style || 'solid';
-        formData.icon = `fa-${style} fa-${formData.icon}`;
-      } else {
+      // Keep icon as is for Ant Design
+      if (!formData.icon) {
         delete formData.icon;
       }
 
