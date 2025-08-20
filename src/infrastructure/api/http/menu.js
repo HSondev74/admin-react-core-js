@@ -127,6 +127,16 @@ class MenuApi extends BaseApi {
       throw error;
     }
   }
+
+  async getRolesMenu(id) {
+    try {
+      const response = await this.get(`/${id}/roles`);
+      return response.data;
+    } catch (error) {
+      console.error('Menu API error:', error);
+      throw error;
+    }
+  }
 }
 
 const menuApi = new MenuApi();
