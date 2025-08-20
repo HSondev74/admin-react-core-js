@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # Development environment with hot-reload
+  app-dev:
+    build:
+      context: .
+      target: development
+    container_name: admin-react-dev
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+    command: sh -c "bun install && bun start"
+    networks:
+      - app-network
+
+  # Production environment
+  app-prod:
+    build:
+      context: .
+      target: production
+      args:
+        - NODE_ENV=production
+    container_name: admin-react-prod
+    restart: always
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - app-network
+    depends_on:
+      - app-prod
+
+  # Optional: If you need a reverse proxy (e.g., for multiple services)
+  # nginx:
+  #   image: nginx:stable-alpine
+  #   container_name: nginx-proxy
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+  #   depends_on:
+  #     - app-prod
+  #   networks:
+  #     - app-network
+
+networks:
+  app-network:
+    driver: bridge
