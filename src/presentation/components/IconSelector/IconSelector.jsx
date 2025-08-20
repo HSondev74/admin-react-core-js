@@ -2,42 +2,22 @@ import { useState, useEffect } from 'react';
 import { Box, TextField, InputAdornment, Grid, IconButton, Popover, Paper } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { formStyles, formViewStyles } from '../../assets/styles/formStyles';
+import * as AntIcons from '@ant-design/icons';
 
 const IconSelector = ({ label, value, onChange, disabled, error, isView }) => {
-  const [icons, setIcons] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredIcons, setFilteredIcons] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
+  
+  // Get all Ant Design icon names
+  const iconNames = Object.keys(AntIcons).filter(name => name.endsWith('Outlined'));
+  
+  const filteredIcons = searchTerm 
+    ? iconNames.filter(name => name.toLowerCase().includes(searchTerm.toLowerCase()))
+    : iconNames;
 
-  useEffect(() => {
-    const loadIcons = async () => {
-      try {
-        const response = await fetch('http://localhost:3000/mts/icons.json');
-        const iconData = await response.json();
-        setIcons(iconData);
-        setFilteredIcons(iconData);
-      } catch (error) {
-        console.error('Error loading icons:', error);
-      }
-    };
-    loadIcons();
-  }, []);
-
-  useEffect(() => {
-    if (!searchTerm) {
-      setFilteredIcons(icons);
-    } else {
-      setFilteredIcons(icons.filter((icon) => icon.name.toLowerCase().includes(searchTerm.toLowerCase())));
-    }
-  }, [searchTerm, icons]);
-
-  const renderIcon = (svgString) => {
-    return (
-      <Box
-        sx={{ width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        dangerouslySetInnerHTML={{ __html: svgString }}
-      />
-    );
+  const renderIcon = (iconName) => {
+    const IconComponent = AntIcons[iconName];
+    return IconComponent ? <IconComponent style={{ fontSize: 20 }} /> : null;
   };
 
   const handleClick = (event) => {
@@ -57,7 +37,18 @@ const IconSelector = ({ label, value, onChange, disabled, error, isView }) => {
   };
 
   const open = Boolean(anchorEl);
-  const selectedIcon = icons.find((icon) => icon.name === value);
+  // Convert value to Ant Design icon name format
+  const getAntIconName = (iconValue) => {
+    if (!iconValue) return null;
+    const cleanName = iconValue.replace(/^fa-/, '');
+    const pascalCase = cleanName
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join('');
+    return pascalCase.endsWith('Outlined') ? pascalCase : `${pascalCase}Outlined`;
+  };
+  
+  const selectedIconName = getAntIconName(value);
 
   return (
     <>
@@ -73,7 +64,7 @@ const IconSelector = ({ label, value, onChange, disabled, error, isView }) => {
         InputLabelProps={{ style: formStyles.label }}
         inputProps={{ style: isView ? formViewStyles.inputReadOnly : formStyles.input, readOnly: isView }}
         InputProps={{
-          startAdornment: selectedIcon ? <InputAdornment position="start">{renderIcon(selectedIcon.svg)}</InputAdornment> : null
+          startAdornment: selectedIconName ? <InputAdornment position="start">{renderIcon(selectedIconName)}</InputAdornment> : null
         }}
         sx={{ cursor: disabled || isView ? 'default' : 'pointer' }}
       />
@@ -126,25 +117,29 @@ const IconSelector = ({ label, value, onChange, disabled, error, isView }) => {
                   ✕
                 </IconButton>
               </Grid>
-              {filteredIcons.slice(0, 200).map((icon) => (
-                <Grid item key={icon.name}>
-                  <IconButton
-                    onClick={() => handleIconSelect(icon.name)}
-                    sx={{
-                      width: 36,
-                      height: 36,
-                      border: '1px solid #e0e0e0',
-                      borderRadius: 1,
-                      bgcolor: value === icon.name ? 'primary.light' : 'transparent',
-                      '&:hover': {
-                        bgcolor: 'primary.light'
-                      }
-                    }}
-                  >
-                    {renderIcon(icon.svg)}
-                  </IconButton>
-                </Grid>
-              ))}
+              {filteredIcons.slice(0, 200).map((iconName) => {
+                // Convert Ant icon name back to simple format for storage
+                const simpleIconName = iconName.replace('Outlined', '').toLowerCase().replace(/([A-Z])/g, '-$1').replace(/^-/, '');
+                return (
+                  <Grid item key={iconName}>
+                    <IconButton
+                      onClick={() => handleIconSelect(simpleIconName)}
+                      sx={{
+                        width: 36,
+                        height: 36,
+                        border: '1px solid #e0e0e0',
+                        borderRadius: 1,
+                        bgcolor: selectedIconName === iconName ? 'primary.light' : 'transparent',
+                        '&:hover': {
+                          bgcolor: 'primary.light'
+                        }
+                      }}
+                    >
+                      {renderIcon(iconName)}
+                    </IconButton>
+                  </Grid>
+                );
+              })}
             </Grid>
           </Box>
         </Paper>

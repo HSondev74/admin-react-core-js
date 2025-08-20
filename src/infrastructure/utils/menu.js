@@ -1,7 +1,7 @@
 import useSWR, { mutate } from 'swr';
 import { useMemo } from 'react';
 import menuApi from '../api/http/menu';
-import { getIconComponent } from '../../utils/iconMapping';
+import { getIconComponent } from './iconMapping';
 
 const initialState = {
   isDashboardDrawerOpened: false
