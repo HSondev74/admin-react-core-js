@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Box, TextField, InputAdornment, Grid, IconButton, Popover, Paper } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { formStyles, formViewStyles } from '../../assets/styles/formStyles';
@@ -7,14 +7,13 @@ import * as AntIcons from '@ant-design/icons';
 const IconSelector = ({ label, value, onChange, disabled, error, isView }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
-  
-  // Get all Ant Design icon names
-  const iconNames = Object.keys(AntIcons).filter(name => name.endsWith('Outlined'));
-  
-  const filteredIcons = searchTerm 
-    ? iconNames.filter(name => name.toLowerCase().includes(searchTerm.toLowerCase()))
-    : iconNames;
 
+  // Lấy tất cả icon Ant Design có hậu tố Outlined
+  const iconNames = Object.keys(AntIcons).filter((name) => name.endsWith('Outlined'));
+
+  const filteredIcons = searchTerm ? iconNames.filter((name) => name.toLowerCase().includes(searchTerm.toLowerCase())) : iconNames;
+
+  // Render 1 icon theo tên
   const renderIcon = (iconName) => {
     const IconComponent = AntIcons[iconName];
     return IconComponent ? <IconComponent style={{ fontSize: 20 }} /> : null;
@@ -31,24 +30,13 @@ const IconSelector = ({ label, value, onChange, disabled, error, isView }) => {
     setSearchTerm('');
   };
 
+  // Khi chọn icon thì lưu đúng tên PascalCase (vd: HomeOutlined)
   const handleIconSelect = (iconName) => {
-    onChange(iconName);
+    onChange(iconName); // <-- lưu iconName gốc
     handleClose();
   };
 
   const open = Boolean(anchorEl);
-  // Convert value to Ant Design icon name format
-  const getAntIconName = (iconValue) => {
-    if (!iconValue) return null;
-    const cleanName = iconValue.replace(/^fa-/, '');
-    const pascalCase = cleanName
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join('');
-    return pascalCase.endsWith('Outlined') ? pascalCase : `${pascalCase}Outlined`;
-  };
-  
-  const selectedIconName = getAntIconName(value);
 
   return (
     <>
@@ -62,9 +50,12 @@ const IconSelector = ({ label, value, onChange, disabled, error, isView }) => {
         error={error}
         placeholder="Chọn icon..."
         InputLabelProps={{ style: formStyles.label }}
-        inputProps={{ style: isView ? formViewStyles.inputReadOnly : formStyles.input, readOnly: isView }}
+        inputProps={{
+          style: isView ? formViewStyles.inputReadOnly : formStyles.input,
+          readOnly: isView
+        }}
         InputProps={{
-          startAdornment: selectedIconName ? <InputAdornment position="start">{renderIcon(selectedIconName)}</InputAdornment> : null
+          startAdornment: value ? <InputAdornment position="start">{renderIcon(value)}</InputAdornment> : null
         }}
         sx={{ cursor: disabled || isView ? 'default' : 'pointer' }}
       />
@@ -117,29 +108,25 @@ const IconSelector = ({ label, value, onChange, disabled, error, isView }) => {
                   ✕
                 </IconButton>
               </Grid>
-              {filteredIcons.slice(0, 200).map((iconName) => {
-                // Convert Ant icon name back to simple format for storage
-                const simpleIconName = iconName.replace('Outlined', '').toLowerCase().replace(/([A-Z])/g, '-$1').replace(/^-/, '');
-                return (
-                  <Grid item key={iconName}>
-                    <IconButton
-                      onClick={() => handleIconSelect(simpleIconName)}
-                      sx={{
-                        width: 36,
-                        height: 36,
-                        border: '1px solid #e0e0e0',
-                        borderRadius: 1,
-                        bgcolor: selectedIconName === iconName ? 'primary.light' : 'transparent',
-                        '&:hover': {
-                          bgcolor: 'primary.light'
-                        }
-                      }}
-                    >
-                      {renderIcon(iconName)}
-                    </IconButton>
-                  </Grid>
-                );
-              })}
+              {filteredIcons.slice(0, 200).map((iconName) => (
+                <Grid item key={iconName}>
+                  <IconButton
+                    onClick={() => handleIconSelect(iconName)} // lưu iconName gốc luôn
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      border: '1px solid #e0e0e0',
+                      borderRadius: 1,
+                      bgcolor: value === iconName ? 'primary.light' : 'transparent',
+                      '&:hover': {
+                        bgcolor: 'primary.light'
+                      }
+                    }}
+                  >
+                    {renderIcon(iconName)}
+                  </IconButton>
+                </Grid>
+              ))}
             </Grid>
           </Box>
         </Paper>

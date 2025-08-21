@@ -152,8 +152,8 @@ export default function MenuManagement() {
 
   // Pagination handlers
   const handleChangePage = (newPage) => {
-    setPage(newPage);
-    loadMenus(newPage, rowsPerPage, searchTerm, activeFilters);
+    setPage(newPage - 1);
+    loadMenus(newPage - 1, rowsPerPage, searchTerm, activeFilters);
   };
 
   const handleChangeRowsPerPage = (newRowsPerPage) => {
@@ -219,7 +219,7 @@ export default function MenuManagement() {
   // Get columns with sort functionality
   const getColumnsWithSort = () => {
     const flatMenus = getPaginatedData();
-    return getMenuColumns(expandedItems, handleToggleExpand, handleSortOrder, flatMenus);
+    return getMenuColumns(expandedItems, handleToggleExpand, handleSortOrder, flatMenus, page, rowsPerPage, totalItems);
   };
 
   const columns = getColumnsWithSort();
@@ -252,7 +252,7 @@ export default function MenuManagement() {
           view: false,
           delete: true
         }}
-        pagination={{ page, rowsPerPage, totalItems }}
+        pagination={{ page: page + 1, rowsPerPage, totalItems }}
         onChangePage={handleChangePage}
         onChangeRowsPerPage={handleChangeRowsPerPage}
         onDelete={handleDelete}
