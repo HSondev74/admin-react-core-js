@@ -40,32 +40,19 @@ export default function ProfileTab({ handleClose }) {
         <ListItemIcon>
           <EditOutlined />
         </ListItemIcon>
-        <ListItemText primary="Edit Profile" />
+        <ListItemText primary="Chỉnh sửa" />
       </ListItemButton>
       <ListItemButton>
         <ListItemIcon>
           <UserOutlined />
         </ListItemIcon>
-        <ListItemText primary="View Profile" />
-      </ListItemButton>
-
-      <ListItemButton>
-        <ListItemIcon>
-          <ProfileOutlined />
-        </ListItemIcon>
-        <ListItemText primary="Social Profile" />
-      </ListItemButton>
-      <ListItemButton>
-        <ListItemIcon>
-          <WalletOutlined />
-        </ListItemIcon>
-        <ListItemText primary="Billing" />
+        <ListItemText primary="Xem thông tin" />
       </ListItemButton>
       <ListItemButton onClick={handleLogout}>
         <ListItemIcon>
           <LogoutOutlined />
         </ListItemIcon>
-        <ListItemText primary="Logout" />
+        <ListItemText primary="Đăng xuất" />
       </ListItemButton>
     </List>
   );

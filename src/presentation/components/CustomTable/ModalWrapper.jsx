@@ -22,6 +22,7 @@ const ModalWrapper = ({
   open,
   title,
   content,
+  minWidth = 'xs',
   maxWidth = 'xs',
   fullWidth = true,
   showActions = true,
@@ -80,6 +81,7 @@ const ModalWrapper = ({
     <Dialog
       open={isOpen}
       onClose={handleClose}
+      minWidth={minWidth}
       maxWidth={maxWidth}
       fullWidth={fullWidth}
       aria-labelledby="modal-dialog-title"
