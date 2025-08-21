@@ -24,6 +24,8 @@ export default function NavGroup({ item }) {
         );
       case 'MENU':
         return <NavItem key={menuItem.id} item={menuItem} level={1} />;
+      case 'BUTTON':
+        return;
       default:
         return (
           <Typography key={menuItem.id} variant="h6" color="error" align="center">
