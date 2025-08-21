@@ -1,0 +1,75 @@
+# Dependencies
+node_modules
+.bun
+
+# Build output
+/dist
+/build
+.next
+out
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Version control
+.git
+.gitignore
+.gitmodules
+
+# Testing
+coverage
+.nyc_output
+
+# Production
+Dockerfile
+docker-compose*.yml
+!.dockerignore
+
+# Local development
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Misc
+.cache
+.temp
+.tmp
+.vercel
+.netlify
+.sass-cache
+.parcel-cache

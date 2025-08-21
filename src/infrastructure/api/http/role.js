@@ -23,13 +23,18 @@ class RolesApi extends BaseApi {
    */
   async getAllRoles(body = {}) {
     try {
-      const { page, size, sortBy, searchTerm, sortDirection } = body;
+      const { page, size, sortBy, searchTerm, sortDirection, code, name, description, dateFrom, dateTo } = body;
 
       const paramMap = {
         page: 'page',
         size: 'size',
         sortBy: 'sortBy',
-        sortDirection: 'sortDirection'
+        sortDirection: 'sortDirection',
+        code: 'code',
+        name: 'name',
+        description: 'description',
+        dateFrom: 'dateFrom',
+        dateTo: 'dateTo'
       };
 
       // Tạo object chứa các params cần thiết từ body
@@ -37,7 +42,12 @@ class RolesApi extends BaseApi {
         page,
         size,
         sortBy,
-        sortDirection
+        sortDirection,
+        code,
+        name,
+        description,
+        dateFrom,
+        dateTo
       };
 
       const mappedParams = Object.fromEntries(
@@ -46,7 +56,7 @@ class RolesApi extends BaseApi {
           .map(([key, value]) => [paramMap[key], value])
       );
 
-      // Xử lý searchTerm
+      // Xử lý searchTerm (fallback cho search chung)
       if (searchTerm && typeof searchTerm === 'string') {
         mappedParams['name'] = searchTerm.trim();
       }

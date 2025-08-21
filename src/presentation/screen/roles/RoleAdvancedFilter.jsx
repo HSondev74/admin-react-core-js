@@ -5,20 +5,10 @@ import CustomSelectField from '../../components/UI/CustomSelectField';
 // Material UI components
 import Grid from '@mui/material/Grid';
 
-const UserAdvancedFilter = ({ onFilter, roleList = [] }) => {
-  // Tạo options cho role từ roleList
-  const roleOptions = [
-    { label: 'Tất cả', value: '' },
-    ...roleList.map((role) => ({
-      label: role.name,
-      value: role.id
-    }))
-  ];
-
+const RoleAdvancedFilter = ({ onFilter }) => {
   return (
     <AdvancedFilter
       initialValues={{
-        roleIds: '',
         sortBy: '',
         sortDirection: ''
       }}
@@ -26,11 +16,7 @@ const UserAdvancedFilter = ({ onFilter, roleList = [] }) => {
     >
       {(filters, handleChange) => (
         <>
-          <Grid item xs={12} md={4}>
-            <CustomSelectField label="Vai trò" name="roleIds" value={filters.roleIds} onChange={handleChange} options={roleOptions} />
-          </Grid>
-
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={6}>
             <CustomSelectField
               label="Sắp xếp theo"
               name="sortBy"
@@ -38,15 +24,16 @@ const UserAdvancedFilter = ({ onFilter, roleList = [] }) => {
               onChange={handleChange}
               options={[
                 { label: 'Không sắp xếp', value: '' },
-                { label: 'Tên', value: 'name' },
-                { label: 'Email', value: 'email' },
-                { label: 'Tên đăng nhập', value: 'username' },
-                { label: 'Ngày tạo', value: 'createTime' }
+                { label: 'Mã chức vụ', value: 'code' },
+                { label: 'Tên chức vụ', value: 'name' },
+                { label: 'Mô tả', value: 'description' },
+                { label: 'Ngày tạo', value: 'createTime' },
+                { label: 'Ngày cập nhật', value: 'updateTime' }
               ]}
             />
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={6}>
             <CustomSelectField
               label="Thứ tự"
               name="sortDirection"
@@ -65,4 +52,4 @@ const UserAdvancedFilter = ({ onFilter, roleList = [] }) => {
   );
 };
 
-export default UserAdvancedFilter;
+export default RoleAdvancedFilter;

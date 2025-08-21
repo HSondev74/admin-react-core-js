@@ -69,7 +69,8 @@ const CustomDataTable = ({
 
   // Effect to sync pagination state with props
   useEffect(() => {
-    setPage(pagination.page);
+    // Convert 1-based page from props to 0-based for MUI TablePagination
+    setPage(pagination.page - 1);
     setRowsPerPage(pagination.rowsPerPage);
   }, [pagination.page, pagination.rowsPerPage]);
 
@@ -138,8 +139,8 @@ const CustomDataTable = ({
     (event, newPage) => {
       setPage(newPage);
       if (enablePagination && onChangePage) {
-        // Kiểm tra enablePagination
-        onChangePage(newPage);
+        // Convert 0-based page to 1-based for parent component
+        onChangePage(newPage + 1);
       }
     },
     [onChangePage, enablePagination]

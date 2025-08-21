@@ -9,6 +9,7 @@ import { formatDateVN } from '../../../app/utils/dateUtils';
 import CustomDataPage from '../../components/CustomTable/CustomDataPage';
 
 import RoleFormAction from './RoleFormAction';
+import RoleAdvancedFilter from './RoleAdvancedFilter';
 
 //notification
 import { useNotification } from '../../../contexts/NotificationContext';
@@ -135,6 +136,14 @@ const RoleManagementPage = () => {
     }
   }, []);
 
+  const handleChangePage = useCallback((newPage) => {
+    setPagination((prev) => ({ ...prev, page: newPage }));
+  }, []);
+
+  const handleChangeRowsPerPage = useCallback((newRowsPerPage) => {
+    setPagination((prev) => ({ ...prev, page: 1, rowsPerPage: newRowsPerPage }));
+  }, []);
+
   // Render component
   return (
     <CustomDataPage
@@ -142,6 +151,7 @@ const RoleManagementPage = () => {
       data={data}
       columns={columns}
       page="roles"
+      filterComponent={<RoleAdvancedFilter onFilter={handleFilter} />}
       onSearch={handleSearch}
       onAssignRoleToUsers={handleAssignRoleToUsers}
       onCreate={handleCreate}
@@ -162,10 +172,12 @@ const RoleManagementPage = () => {
       viewComponent={(props) => <RoleFormAction {...props} title="Xem chi tiết chức vụ" isAssignRole={false} isView={true} />}
       collapsible={false}
       loading={loading}
+      onChangePage={handleChangePage}
       pagination={{ ...pagination, totalItems }}
+      onChangeRowsPerPage={handleChangeRowsPerPage}
       searchPlaceholder="Tìm kiếm theo mã chức vụ, tên chức vụ,..."
       enableSearch={true}
-      enableFilter={false}
+      enableFilter={true}
       enablePagination={true}
     />
   );
