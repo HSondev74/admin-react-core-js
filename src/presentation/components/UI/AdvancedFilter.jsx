@@ -16,7 +16,7 @@ const AdvancedFilter = ({ initialValues, onFilter, children }) => {
 
   const handleReset = () => {
     setFilters(initialValues);
-    if (onFilter) onFilter({});
+    if (onFilter) onFilter(initialValues);
   };
 
   const handleApplyFilter = () => {

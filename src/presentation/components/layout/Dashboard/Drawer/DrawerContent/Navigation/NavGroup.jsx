@@ -6,9 +6,11 @@ import Box from '@mui/material/Box';
 
 // project import
 import NavItem from './NavItem';
-import { useGetMenuMaster } from '../../../../../../../infrastructure/api/http/menu';
+import { useGetMenuMaster } from '../../../../../../../infrastructure/utils/menu';
 
 export default function NavGroup({ item }) {
+  console.log('item navgroup', item);
+
   const { menuMaster } = useGetMenuMaster();
   const drawerOpen = menuMaster.isDashboardDrawerOpened;
 
@@ -20,7 +22,7 @@ export default function NavGroup({ item }) {
             collapse - only available in paid version
           </Typography>
         );
-      case 'item':
+      case 'MENU':
         return <NavItem key={menuItem.id} item={menuItem} level={1} />;
       default:
         return (

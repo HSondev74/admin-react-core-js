@@ -12,7 +12,7 @@ import Footer from './Footer';
 import Loader from '../../Loader';
 import Breadcrumbs from '../../@extended/Breadcrumbs';
 
-import { handlerDrawerOpen, useGetMenuMaster } from '../../../../infrastructure/api/http/menu';
+import { handlerDrawerOpen, useGetMenuMaster } from '../../../../infrastructure/utils/menu';
 
 // ==============================|| MAIN LAYOUT ||============================== //
 
