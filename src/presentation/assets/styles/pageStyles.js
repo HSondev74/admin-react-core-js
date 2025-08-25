@@ -66,7 +66,8 @@ export const pageStyles = {
 
 export const modalWrapperStyles = {
   paper: {
-    width: '35vw',
+    minWidth: '400px',
+    width: '40vw',
     margin: '0 auto'
   },
   titleContainer: {

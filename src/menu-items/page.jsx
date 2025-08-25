@@ -1,5 +1,13 @@
 // assets
-import { LoginOutlined, ProfileOutlined, UserOutlined, TeamOutlined, ReadOutlined, ScheduleOutlined } from '@ant-design/icons';
+import {
+  LoginOutlined,
+  ProfileOutlined,
+  UserOutlined,
+  TeamOutlined,
+  ReadOutlined,
+  ScheduleOutlined,
+  FieldTimeOutlined
+} from '@ant-design/icons';
 
 // icons
 const icons = {
@@ -8,7 +16,8 @@ const icons = {
   UserOutlined,
   TeamOutlined,
   ReadOutlined,
-  ScheduleOutlined
+  ScheduleOutlined,
+  FieldTimeOutlined
 };
 
 // ==============================|| MENU ITEMS - EXTRA PAGES ||============================== //
@@ -80,6 +89,13 @@ const pages = {
       title: 'Quản lý chấm công',
       type: 'item',
       url: '/timekeeping',
+      icon: icons.FieldTimeOutlined
+    },
+    {
+      id: 'workschedule',
+      title: 'Quản lý lịch làm',
+      type: 'item',
+      url: '/workschedule',
       icon: icons.ScheduleOutlined
     }
   ]
