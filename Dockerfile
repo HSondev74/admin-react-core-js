@@ -5,7 +5,7 @@ WORKDIR /app
 # Development stage
 FROM base AS development
 ENV NODE_ENV=development
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 RUN npm install -g bun && bun install
 COPY . .
 EXPOSE 3000
@@ -14,7 +14,7 @@ CMD ["bun", "start", "--host"]
 # Build stage
 FROM base AS builder
 ENV NODE_ENV=production
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 RUN npm install -g bun && bun install --frozen-lockfile
 COPY . .
 RUN bun run build

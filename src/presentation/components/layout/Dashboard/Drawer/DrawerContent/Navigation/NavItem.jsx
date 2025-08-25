@@ -14,14 +14,18 @@ import Box from '@mui/material/Box';
 import Fade from '@mui/material/Fade';
 import Popper from '@mui/material/Popper';
 import Grow from '@mui/material/Grow';
+import Tooltip from '@mui/material/Tooltip';
 // project imports
 import IconButton from '../../../../../@extended/IconButton';
 
-import { handlerDrawerOpen, useGetMenuMaster } from '../../../../../../../infrastructure/api/http/menu';
+import { handlerDrawerOpen, useGetMenuMaster } from '../../../../../../../infrastructure/utils/menu';
 
+// Icon ant design
 import { DownOutlined } from '@ant-design/icons';
 import { RightOutlined } from '@ant-design/icons';
-import { useRef, useState } from 'react';
+
+// Hooks
+import { useRef, useState, useEffect } from 'react';
 import NavSubMenu from './NavSubMenu';
 
 // ==============================|| NAVIGATION - LIST ITEM ||============================== //
@@ -29,6 +33,13 @@ import NavSubMenu from './NavSubMenu';
 export default function NavItem({ item, level, isParents = false, setSelectedID }) {
   const { menuMaster } = useGetMenuMaster();
   const drawerOpen = menuMaster.isDashboardDrawerOpened;
+  console.log('item navitem', item);
+
+  // Don't render BUTTON type items in sidebar
+  const actualItem = item.item || item;
+  if (actualItem.menuType === 'BUTTON' || actualItem.type === 'BUTTON') {
+    return null;
+  }
 
   const downLG = useMediaQuery((theme) => theme.breakpoints.down('lg'));
 
@@ -46,16 +57,25 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
   };
 
   const Icon = item.icon;
-  const itemIcon = item.icon ? (
-    <Icon
-      style={{
-        fontSize: drawerOpen ? '1rem' : '1.25rem',
-        ...(isParents && { fontSize: 20, stroke: '1.5' })
-      }}
-    />
-  ) : (
-    false
-  );
+  const isChildItem = !!actualItem.parentId;
+  console.log('NavItem Debug:', {
+    title: item.title || actualItem.name,
+    level,
+    parentId: actualItem.parentId,
+    isChildItem,
+    actualItem
+  });
+  const itemIcon =
+    item.icon && !isChildItem ? (
+      <Icon
+        style={{
+          fontSize: drawerOpen ? '1rem' : '1.25rem',
+          ...(isParents && { fontSize: 20, stroke: '1.5' })
+        }}
+      />
+    ) : (
+      false
+    );
 
   const { pathname } = useLocation();
   const path = item?.link || item?.url || '';
@@ -63,154 +83,218 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
   const textColor = 'text.primary';
   const iconSelectedColor = 'primary.main';
 
-  // Condition dynamic dashboard (side bar)
+  /**
+   *
+   *<=================== Condition dynamic dashboard (side bar) ===================>
+   *
+   */
   const [isOpen, setIsOpen] = useState(false);
   const hasChild = Array.isArray(item.children) && item.children.length > 0;
-  const showIcon = Array.isArray(item.children) && item.children.length > 0 && !item.children.every((child) => child.type === 'button');
-  const isSubMenu = hasChild && item.children.some((child) => child.type !== 'button');
-
+  const showIcon = Array.isArray(item.children) && item.children.length > 0 && !item.children.every((child) => (child.item?.menuType || child.menuType || child.type) === 'BUTTON');
+  const isSubMenu = hasChild && item.children.some((child) => (child.item?.menuType || child.menuType || child.type) !== 'BUTTON');
+  console.log('isSubMenu', item.children);
   // Condition dynamic dashboard (popup)
   const [showSubMenu, setShowSubMenu] = useState(false);
+  const [isHoverable, setIsHoverable] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
+  const hoverTimeoutRef = useRef(null);
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    setIsHoverable(true);
+    hoverTimeoutRef.current = setTimeout(() => {
+      setShowSubMenu(true);
+    }, 100);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setIsHoverable(false);
+
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+
+    hoverTimeoutRef.current = setTimeout(() => {
+      setShowSubMenu(false);
+    }, 100); // Delay 100ms when mouse leaves
+  };
+
   const handleClick = (e) => {
-    if (isSubMenu) {
+    if (isSubMenu && drawerOpen) {
       e.preventDefault();
-      setIsOpen((prev) => !prev);
-    } else {
+      setIsOpen((prev) => !prev); // Ony navigate when there is no submenu
+    } else if (!isSubMenu) {
       itemHandler();
+      setShowSubMenu(false); // Tắt popup khi click vào item
     }
   };
+
+  // Tắt popup khi pathname thay đổi
+  useEffect(() => {
+    setShowSubMenu(false);
+  }, [pathname]);
   const buttonRef = useRef();
   return (
     <>
       <Box sx={{ position: 'relative' }}>
-        <ListItemButton
-          ref={buttonRef}
-          component={Link}
-          to={item.url}
-          target={itemTarget}
-          disabled={item.disabled}
-          selected={isSelected}
-          onClick={handleClick}
-          onMouseEnter={() => setShowSubMenu(true)}
-          onMouseLeave={() => setShowSubMenu(false)}
-          sx={(theme) => ({
-            zIndex: 1201,
-            pl: drawerOpen ? `${level * 28}px` : 1.5,
-            py: !drawerOpen && level === 1 ? 1.25 : 1,
-            ...(drawerOpen && {
-              '&:hover': { bgcolor: 'primary.lighter', ...theme.applyStyles('dark', { bgcolor: 'divider' }) },
-              '&.Mui-selected': {
-                bgcolor: 'primary.lighter',
-                ...theme.applyStyles('dark', { bgcolor: 'divider' }),
-                borderRight: '2px solid',
-                borderColor: 'primary.main',
-                color: iconSelectedColor,
-                '&:hover': { color: iconSelectedColor, bgcolor: 'primary.lighter', ...theme.applyStyles('dark', { bgcolor: 'divider' }) }
-              }
-            }),
-            ...(!drawerOpen && {
-              '&:hover': { bgcolor: 'transparent' },
-              '&.Mui-selected': { '&:hover': { bgcolor: 'transparent' }, bgcolor: 'transparent' }
-            })
-          })}
-        >
-          {itemIcon && level === 1 && (
-            <ListItemIcon
-              sx={(theme) => ({
-                minWidth: 28,
-                color: isSelected ? iconSelectedColor : textColor,
-                ...(!drawerOpen && {
-                  borderRadius: 1.5,
-                  width: 36,
-                  height: 36,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  '&:hover': { bgcolor: 'secondary.lighter', ...theme.applyStyles('dark', { bgcolor: 'secondary.light' }) }
-                }),
-                ...(!drawerOpen &&
-                  isSelected && {
+        <Tooltip title={item.title} placement="right" disableHoverListener={drawerOpen || level > 1 || hasChild} arrow>
+          <ListItemButton
+            ref={buttonRef}
+            component={Link}
+            to={item.url}
+            target={itemTarget}
+            disabled={item.disabled}
+            selected={isSelected}
+            onClick={handleClick}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            sx={(theme) => ({
+              zIndex: 1201,
+              pl: drawerOpen ? `${level * 24}px` : 1.5,
+              py: !drawerOpen && level === 1 ? 1.25 : 1,
+              ...(drawerOpen && {
+                '&:hover': { bgcolor: 'primary.lighter', ...theme.applyStyles('dark', { bgcolor: 'divider' }) },
+                '&.Mui-selected': {
+                  bgcolor: 'primary.lighter',
+                  ...theme.applyStyles('dark', { bgcolor: 'divider' }),
+                  borderRight: '2px solid',
+                  borderColor: 'primary.main',
+                  color: iconSelectedColor,
+                  '&:hover': {
+                    color: iconSelectedColor,
                     bgcolor: 'primary.lighter',
-                    ...theme.applyStyles('dark', { bgcolor: 'primary.900' }),
-                    '&:hover': { bgcolor: 'primary.lighter', ...theme.applyStyles('dark', { bgcolor: 'primary.darker' }) }
-                  })
-              })}
-            >
-              {itemIcon}
-            </ListItemIcon>
-          )}
-          {/* Popper submenu */}
-          {hasChild && !drawerOpen && (
-            <Popper
-              open={showSubMenu}
-              anchorEl={buttonRef.current}
-              placement="right-start"
-              disablePortal={false}
-              style={{ zIndex: 2100 }}
-              onMouseEnter={() => setShowSubMenu(true)}
-              transition
-            >
-              {({ TransitionProps }) => (
-                <Grow {...TransitionProps} style={{ transformOrigin: 'top left' }} timeout={500}>
-                  <Box>
-                    <NavSubMenu items={item.children} level={level + 1} setSelectedID={setSelectedID} />
-                  </Box>
-                </Grow>
-              )}
-            </Popper>
-          )}
-          {(drawerOpen || (!drawerOpen && level !== 1)) && (
-            <ListItemText
-              primary={
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="h6" sx={{ color: isSelected ? iconSelectedColor : textColor }}>
-                    {item.title}
-                  </Typography>
-
-                  {hasChild && !drawerOpen && (
-                    <RightOutlined
-                      style={{
-                        fontSize: '12px',
-                        transition: 'transform 0.2s'
+                    ...theme.applyStyles('dark', { bgcolor: 'divider' })
+                  }
+                }
+              }),
+              ...(!drawerOpen && {
+                '&:hover': { bgcolor: 'transparent' },
+                '&.Mui-selected': { '&:hover': { bgcolor: 'transparent' }, bgcolor: 'transparent' }
+              })
+            })}
+          >
+            {itemIcon && level === 1 && !isChildItem && (
+              <ListItemIcon
+                sx={(theme) => ({
+                  minWidth: 28,
+                  color: isSelected ? iconSelectedColor : textColor,
+                  ...(!drawerOpen && {
+                    borderRadius: 1.5,
+                    width: 36,
+                    height: 36,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    '&:hover': { bgcolor: 'secondary.lighter', ...theme.applyStyles('dark', { bgcolor: 'secondary.light' }) }
+                  }),
+                  ...(!drawerOpen &&
+                    isSelected && {
+                      bgcolor: 'primary.lighter',
+                      ...theme.applyStyles('dark', { bgcolor: 'primary.900' }),
+                      '&:hover': { bgcolor: 'primary.lighter', ...theme.applyStyles('dark', { bgcolor: 'primary.darker' }) }
+                    })
+                })}
+              >
+                {itemIcon}
+              </ListItemIcon>
+            )}
+            {/* Popper submenu */}
+            {hasChild && !drawerOpen && (
+              <Popper
+                open={showSubMenu}
+                anchorEl={buttonRef.current}
+                placement="right-start"
+                disablePortal={false}
+                style={{ zIndex: 2100, pointerEvents: isHoverable ? 'auto' : 'none' }}
+                onMouseEnter={handleMouseEnter}
+                transition
+              >
+                {({ TransitionProps }) => (
+                  <Grow {...TransitionProps} style={{ transformOrigin: 'top left' }} timeout={200}>
+                    <Box
+                      sx={{
+                        mt: level == 1 ? 1 : 0
                       }}
-                    />
-                  )}
-                </Box>
-              }
-            />
-          )}
-          {(drawerOpen || (!drawerOpen && level !== 1)) && item.chip && (
-            <Chip
-              color={item.chip.color}
-              variant={item.chip.variant}
-              size={item.chip.size}
-              label={item.chip.label}
-              avatar={item.chip.avatar && <Avatar>{item.chip.avatar}</Avatar>}
-            />
-          )}
+                    >
+                      <NavSubMenu
+                        items={item.children.filter((child) => (child.item?.menuType || child.menuType || child.type) !== 'BUTTON')}
+                        level={level + 1}
+                        setSelectedID={setSelectedID}
+                        parentTitle={level === 1 ? item.title : undefined}
+                      />
+                    </Box>
+                  </Grow>
+                )}
+              </Popper>
+            )}
 
-          {showIcon && drawerOpen && (
-            <Fade in={drawerOpen} timeout={300} unmountOnExit>
-              <Box sx={{ marginRight: '2px' }}>
-                <DownOutlined
-                  style={{
-                    fontSize: '12px',
-                    transition: 'transform 0.2s',
-                    transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)'
-                  }}
-                />
-              </Box>
-            </Fade>
-          )}
-        </ListItemButton>
+            {/* Show popup */}
+            {(drawerOpen || (!drawerOpen && level !== 1)) && (
+              <ListItemText
+                primary={
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        color: isSelected || isHovered ? '#1677ff' : level > 1 ? '#333' : textColor,
+                        transition: 'color 0.2s'
+                      }}
+                    >
+                      {item.title}
+                    </Typography>
+
+                    {hasChild && !drawerOpen && (
+                      <RightOutlined
+                        style={{
+                          fontSize: '12px',
+                          transition: 'transform 0.2s'
+                        }}
+                      />
+                    )}
+                  </Box>
+                }
+              />
+            )}
+            {(drawerOpen || (!drawerOpen && level !== 1)) && item.chip && (
+              <Chip
+                color={item.chip.color}
+                variant={item.chip.variant}
+                size={item.chip.size}
+                label={item.chip.label}
+                avatar={item.chip.avatar && <Avatar>{item.chip.avatar}</Avatar>}
+              />
+            )}
+
+            {/* Show icon  */}
+            {showIcon && drawerOpen && (
+              <Fade in={drawerOpen} timeout={300} unmountOnExit>
+                <Box sx={{ marginRight: '2px' }}>
+                  <DownOutlined
+                    style={{
+                      fontSize: '12px',
+                      transition: 'transform 0.2s',
+                      transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)'
+                    }}
+                  />
+                </Box>
+              </Fade>
+            )}
+          </ListItemButton>
+        </Tooltip>
 
         {/* Collapse for open drawer */}
         {drawerOpen && hasChild && (
           <Collapse in={isOpen} timeout="auto" unmountOnExit>
             <Box>
               {item.children.map((child, id) => {
-                if (child.type !== 'button') {
-                  return <NavItem key={id} item={child} level={level} isParents={false} setSelectedID={setSelectedID} />;
+                const childMenuType = child.item?.menuType || child.menuType || child.type;
+                if (childMenuType !== 'BUTTON') {
+                  return <NavItem key={id} item={child} level={level + 1} isParents={false} setSelectedID={setSelectedID} />;
                 }
+                return null;
               })}
             </Box>
           </Collapse>

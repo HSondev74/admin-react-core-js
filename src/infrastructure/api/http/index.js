@@ -1,14 +1,15 @@
 import authApi from './auth';
 import usersApi from './users';
-import { useGetMenuMaster, handlerDrawerOpen } from './menu';
+import { useGetMenuMaster, useGetMenuTree, handlerDrawerOpen } from './menu';
 
-export { authApi, usersApi, useGetMenuMaster, handlerDrawerOpen };
+export { authApi, usersApi, useGetMenuMaster, useGetMenuTree, handlerDrawerOpen };
 
 export default {
   auth: authApi,
   users: usersApi,
   menu: {
     useGetMenuMaster,
+    useGetMenuTree,
     handlerDrawerOpen
   }
 };

@@ -3,6 +3,7 @@ import { lazy } from 'react';
 // project imports
 import Loadable from '../presentation/components/Loadable';
 import DashboardLayout from '../presentation/components/layout/Dashboard';
+import MenuManagement from '../presentation/screen/menus';
 import DictionaryPage from '../presentation/screen/dictionary';
 import TimeKeepingPage from '../presentation/screen/timekeeping';
 import WorkSchedulePage from '../presentation/screen/workschedule';
@@ -34,6 +35,7 @@ const MainRoutes = {
     },
     {
       path: 'dashboard',
+      element: <DashboardDefault />,
       children: [
         {
           path: 'default',
@@ -58,12 +60,16 @@ const MainRoutes = {
       element: <SamplePage />
     },
     {
-      path: 'user-mangement',
+      path: 'users',
       element: <UserManagementPage />
     },
     {
-      path: 'role-mangement',
+      path: 'roles',
       element: <RoleManagementPage />
+    },
+    {
+      path: 'settings',
+      element: <MenuManagement /> // Placeholder for settings page
     },
     {
       path: 'dictionary',
