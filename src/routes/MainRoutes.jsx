@@ -6,6 +6,7 @@ import DashboardLayout from '../presentation/components/layout/Dashboard';
 import MenuManagement from '../presentation/screen/menus';
 import DictionaryPage from '../presentation/screen/dictionary';
 import TimeKeepingPage from '../presentation/screen/timekeeping';
+import WorkSchedulePage from '../presentation/screen/workschedule';
 
 // render- Dashboard
 const DashboardDefault = Loadable(lazy(() => import('../presentation/screen/dashboard/default')));
@@ -77,6 +78,10 @@ const MainRoutes = {
     {
       path: 'timekeeping',
       element: <TimeKeepingPage />
+    },
+    {
+      path: 'workschedule',
+      element: <WorkSchedulePage />
     }
   ]
 };

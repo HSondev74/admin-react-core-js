@@ -25,6 +25,7 @@ import {
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
+  FieldTimeOutlined,
   MoreOutlined
 } from '@ant-design/icons';
 // style
@@ -39,7 +40,7 @@ const CustomDataTable = ({
   loading = false,
   showCheckbox = true,
   actionType = 'icon-text', // 'icon', 'text', 'icon-text'
-  permissions = { assignRole: true, edit: true, view: true, delete: true },
+  permissions = { assignSchedule: false, assignRole: false, edit: true, view: true, delete: true },
   collapsible = false,
   renderCollapse,
   pagination = { page: 0, rowsPerPage: 10, totalItems: 0 },
@@ -256,6 +257,17 @@ const CustomDataTable = ({
               <CompassOutlined style={tableStyles.menuItemIcon} /> Gán quyền
             </MenuItem>
           )}
+          {permissions.assignSchedule && (
+            <MenuItem
+              onClick={() => {
+                handleAssignRole(selectedItem);
+                handleCloseMenu();
+              }}
+              sx={{ color: 'darkcyan' }}
+            >
+              <FieldTimeOutlined style={tableStyles.menuItemIcon} /> Gán lịch
+            </MenuItem>
+          )}
           {permissions.view && (
             <MenuItem
               onClick={() => {
@@ -340,9 +352,7 @@ const CustomDataTable = ({
                 </TableCell>
               ))}
               {(permissions.edit || permissions.view || permissions.delete) && (
-                <TableCell align="center" sx={tableStyles.tableHeadCellActions}>
-                  Thao tác
-                </TableCell>
+                <TableCell sx={{ ...tableStyles.tableHeadCellActions, minWidth: '100px' }}>Thao tác</TableCell>
               )}
             </TableRow>
           </TableHead>
