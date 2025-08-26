@@ -28,7 +28,7 @@ const listMenus = (menus, level = 0, expandedItems = []) => {
   return result;
 };
 
-export default function MenuManagement() {
+export default function MenuManagementPage() {
   const [menus, setMenus] = useState([]);
   const [filteredMenus, setFilteredMenus] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -172,7 +172,7 @@ export default function MenuManagement() {
       // If item is flat, wrap it
       return { item, level: 0, children: [], id: item.id };
     });
-    
+
     // Use listMenus function to handle expand/collapse
     return listMenus(processedMenus, 0, expandedItems);
   };

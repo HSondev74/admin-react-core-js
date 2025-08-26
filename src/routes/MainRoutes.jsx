@@ -68,7 +68,7 @@ const MainRoutes = {
     },
     {
       path: 'settings',
-      element: <MenuManagement /> // Placeholder for settings page
+      element: <MenuManagementPage />
     },
     {
       path: 'dictionary',
