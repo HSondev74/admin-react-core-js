@@ -6,6 +6,7 @@ import DashboardLayout from '../presentation/components/layout/Dashboard';
 import MenuManagement from '../presentation/screen/menus';
 import DictionaryPage from '../presentation/screen/dictionary';
 import TimeKeepingPage from '../presentation/screen/timekeeping';
+import DepartmentPage from '../presentation/screen/departments';
 
 // render- Dashboard
 const DashboardDefault = Loadable(lazy(() => import('../presentation/screen/dashboard/default')));
@@ -67,7 +68,7 @@ const MainRoutes = {
       element: <RoleManagementPage />
     },
     {
-      path: 'settings',
+      path: 'menus',
       element: <MenuManagement /> // Placeholder for settings page
     },
     {
@@ -77,6 +78,10 @@ const MainRoutes = {
     {
       path: 'timekeeping',
       element: <TimeKeepingPage />
+    },
+    {
+      path: 'departments',
+      element: <DepartmentPage />
     }
   ]
 };
