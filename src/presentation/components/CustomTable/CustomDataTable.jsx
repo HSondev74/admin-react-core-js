@@ -223,7 +223,7 @@ const CustomDataTable = ({
   // Render action buttons for each row
   const renderActionButtons = useCallback(
     (item) => (
-      <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
         <IconButton
           aria-label="more actions"
           aria-controls={open ? 'actions-menu' : undefined}
@@ -377,7 +377,9 @@ const CustomDataTable = ({
                   }
                   align="center"
                 >
-                  <Typography variant="body2" sx={{ py: 4 }}>Không có dữ liệu</Typography>
+                  <Typography variant="body2" sx={{ py: 4 }}>
+                    Không có dữ liệu
+                  </Typography>
                 </TableCell>
               </TableRow>
             ) : (

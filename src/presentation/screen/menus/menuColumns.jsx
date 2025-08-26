@@ -8,7 +8,6 @@ export const getMenuColumns = (expandedItems, onToggleExpand, onSortOrder, flatM
     label: 'Tên danh sách',
     minWidth: 150,
     align: 'left',
-    padding: 3.5,
     render: (value, row) => {
       const item = row.item;
       const hasChildren = row.children && row.children.length > 0;
@@ -16,7 +15,7 @@ export const getMenuColumns = (expandedItems, onToggleExpand, onSortOrder, flatM
       const indentLevel = row.level || 0;
 
       return (
-        <Box sx={{ display: 'flex', alignItems: 'center', pl: indentLevel * 2 }}>
+        <Box sx={{ pl: indentLevel * 2 }}>
           {hasChildren ? (
             <IconButton
               size="small"
@@ -37,10 +36,12 @@ export const getMenuColumns = (expandedItems, onToggleExpand, onSortOrder, flatM
           )}
           <Typography
             variant="body1"
-            sx={{
-              fontWeight: indentLevel === 0 ? 'bold' : 'normal',
-              color: indentLevel === 0 ? 'primary.main' : 'text.primary'
-            }}
+            sx={
+              {
+                // fontWeight: indentLevel === 0 ? 'bold' : 'normal',
+                // color: indentLevel === 0 ? 'primary.main' : 'text.primary'
+              }
+            }
           >
             {item.name}
             {hasChildren && (
@@ -56,7 +57,7 @@ export const getMenuColumns = (expandedItems, onToggleExpand, onSortOrder, flatM
   {
     id: 'path',
     label: 'Đường dẫn',
-    minWidth: 100,
+    minWidth: 120,
     align: 'left',
     render: (value, row) => (
       <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
@@ -67,8 +68,8 @@ export const getMenuColumns = (expandedItems, onToggleExpand, onSortOrder, flatM
   {
     id: 'type',
     label: 'Loại',
-    minWidth: 100,
-    align: 'center',
+    minWidth: 130,
+    align: 'left',
     render: (value, row) => {
       const menuType = row.item.menuType || 'Unknown';
       return (
@@ -81,7 +82,7 @@ export const getMenuColumns = (expandedItems, onToggleExpand, onSortOrder, flatM
   {
     id: 'sortOrder',
     label: 'Sắp xếp',
-    minWidth: 80,
+    minWidth: 120,
     align: 'center',
     render: (value, row) => {
       const currentIndex = flatMenus.findIndex(menu => menu.item?.id === row.item?.id);
@@ -97,8 +98,8 @@ export const getMenuColumns = (expandedItems, onToggleExpand, onSortOrder, flatM
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
           {!isFirstInDB && (
-            <IconButton 
-              size="small" 
+            <IconButton
+              size="small"
               sx={{ p: 0.25 }}
               onClick={(event) => onSortOrder && onSortOrder(row, 'UP', event)}
               disabled={!onSortOrder}
@@ -107,8 +108,8 @@ export const getMenuColumns = (expandedItems, onToggleExpand, onSortOrder, flatM
             </IconButton>
           )}
           {!isLastInDB && (
-            <IconButton 
-              size="small" 
+            <IconButton
+              size="small"
               sx={{ p: 0.25 }}
               onClick={(event) => onSortOrder && onSortOrder(row, 'DOWN', event)}
               disabled={!onSortOrder}

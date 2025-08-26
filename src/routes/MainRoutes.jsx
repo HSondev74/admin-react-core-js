@@ -68,8 +68,8 @@ const MainRoutes = {
       element: <RoleManagementPage />
     },
     {
-      path: 'settings',
-      element: <MenuManagementPage />
+      path: 'menus',
+      element: <MenuManagement />
     },
     {
       path: 'dictionary',
