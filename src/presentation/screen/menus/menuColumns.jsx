@@ -2,7 +2,15 @@ import { Box, Typography, IconButton } from '@mui/material';
 import { ArrowUpward, ArrowDownward } from '@mui/icons-material';
 import { DownOutlined, RightOutlined } from '@ant-design/icons';
 
-export const getMenuColumns = (expandedItems, onToggleExpand, onSortOrder, flatMenus = [], page = 0, rowsPerPage = 10, totalItems = 0) => [
+export const getMenuColumns = (
+  expandedItems,
+  onToggleExpand,
+  onSortOrder,
+  flatMenus = [],
+  page = 0,
+  rowsPerPage = 10,
+  totalItems = 0
+) => [
   {
     id: 'name',
     label: 'Tên danh sách',
@@ -15,7 +23,7 @@ export const getMenuColumns = (expandedItems, onToggleExpand, onSortOrder, flatM
       const indentLevel = row.level || 0;
 
       return (
-        <Box sx={{ pl: indentLevel * 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', pl: indentLevel * 2 }}>
           {hasChildren ? (
             <IconButton
               size="small"
@@ -85,16 +93,16 @@ export const getMenuColumns = (expandedItems, onToggleExpand, onSortOrder, flatM
     minWidth: 120,
     align: 'center',
     render: (value, row) => {
-      const currentIndex = flatMenus.findIndex(menu => menu.item?.id === row.item?.id);
+      const currentIndex = flatMenus.findIndex((menu) => menu.item?.id === row.item?.id);
       const isFirstInPage = currentIndex === 0;
       const isLastInPage = currentIndex === flatMenus.length - 1;
-      
+
       // Check if this is the first item in the entire database
       const isFirstInDB = page === 0 && isFirstInPage;
-      
+
       // Check if this is the last item in the entire database
       const isLastInDB = (page + 1) * rowsPerPage >= totalItems && isLastInPage;
-      
+
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
           {!isFirstInDB && (
