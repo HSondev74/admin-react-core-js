@@ -14,7 +14,7 @@ export const getMenuColumns = (
   {
     id: 'name',
     label: 'Tên danh sách',
-    minWidth: 150,
+    minWidth: 300,
     align: 'left',
     render: (value, row) => {
       const item = row.item;
@@ -65,7 +65,7 @@ export const getMenuColumns = (
   {
     id: 'path',
     label: 'Đường dẫn',
-    minWidth: 120,
+    minWidth: 150,
     align: 'left',
     render: (value, row) => (
       <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
@@ -76,7 +76,7 @@ export const getMenuColumns = (
   {
     id: 'type',
     label: 'Loại',
-    minWidth: 130,
+    minWidth: 100,
     align: 'left',
     render: (value, row) => {
       const menuType = row.item.menuType || 'Unknown';

@@ -48,7 +48,8 @@ const TimeKeepingPage = () => {
     isLoading: loading
   } = useSWR(['timekeeping', timeKeepingParams], ([key, params]) => timeKeepingApi.getAllTimekeeping(params));
 
-  const data = timeKeepingResponse?.data?.data || [];
+  const data = timeKeepingResponse?.data?.data.content || [];
+  console.log('Timekeeping Data:', data); // Debug log
   const totalItems = data.length;
 
   // Render status chip

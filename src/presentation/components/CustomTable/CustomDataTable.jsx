@@ -106,7 +106,7 @@ const CustomDataTable = ({
   const handleSelectAllClick = useCallback(
     (event) => {
       if (event.target.checked) {
-        const newSelected = data.map((n) => n.id);
+        const newSelected = data.map((n) => n.item?.id || n.id);
         setSelected(newSelected);
       } else {
         setSelected([]);
@@ -202,7 +202,11 @@ const CustomDataTable = ({
       if (!onRowClick) return;
 
       // Tránh trigger khi click vào checkbox hoặc action buttons
-      if (event.target.closest('input[type="checkbox"]') || event.target.closest('button') || event.target.closest('[role="button"]')) {
+      if (
+        event.target.closest('input[type="checkbox"]') ||
+        event.target.closest('button') ||
+        event.target.closest('[role="button"]')
+      ) {
         return;
       }
 
@@ -377,13 +381,16 @@ const CustomDataTable = ({
                   }
                   align="center"
                 >
-                  <Typography variant="body2" sx={{ py: 4 }}>Không có dữ liệu</Typography>
+                  <Typography variant="body2" sx={{ py: 4 }}>
+                    Không có dữ liệu
+                  </Typography>
                 </TableCell>
               </TableRow>
             ) : (
               data.map((row) => {
-                const isItemSelected = isSelected(row.id);
-                const isExpanded = expandedRows[row.id] || false;
+                const rowId = row.item?.id || row.id;
+                const isItemSelected = isSelected(rowId);
+                const isExpanded = expandedRows[rowId] || false;
 
                 return (
                   <>
@@ -392,7 +399,7 @@ const CustomDataTable = ({
                       role="checkbox"
                       aria-checked={isItemSelected}
                       tabIndex={-1}
-                      key={row.id}
+                      key={rowId}
                       selected={isItemSelected}
                       onClick={onRowClick ? (event) => handleRowClick(row, event) : undefined}
                       sx={{
@@ -401,7 +408,7 @@ const CustomDataTable = ({
                     >
                       {collapsible && (
                         <TableCell sx={tableStyles.tableBodyCellExpand}>
-                          <IconButton aria-label="expand row" size="small" onClick={() => toggleRowExpand(row.id)}>
+                          <IconButton aria-label="expand row" size="small" onClick={() => toggleRowExpand(rowId)}>
                             {isExpanded ? <ArrowDownOutlined /> : <ArrowRightOutlined />}
                           </IconButton>
                         </TableCell>
@@ -411,9 +418,9 @@ const CustomDataTable = ({
                           <Checkbox
                             color="primary"
                             checked={isItemSelected}
-                            onClick={(event) => handleClick(event, row.id)}
+                            onClick={(event) => handleClick(event, rowId)}
                             inputProps={{
-                              'aria-labelledby': `enhanced-table-checkbox-${row.id}`
+                              'aria-labelledby': `enhanced-table-checkbox-${rowId}`
                             }}
                           />
                         </TableCell>
